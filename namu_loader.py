@@ -1,5 +1,5 @@
 import os
-from namu_crawler import NamuCrawler
+from namu_crawler import namuCrawler
 from langchain_core.documents import Document
 from langchain_community.document_loaders.base import BaseLoader
 from typing import Iterator
@@ -11,13 +11,13 @@ class NamuLoader(BaseLoader):
         self.url = url
         self.max_hop = max_hop
         self.verbose = verbose
-        self.base_nc = NamuCrawler(url = self.url, hop = 0)
+        self.base_nc = namuCrawler(url = self.url, hop = 0)
         self.base_nc.construct_toc()
         if (self.verbose) == True:
             self.base_nc.print_toc()
 
     def get_total_content(self, parent_item, sub_url, hop):
-        sub_nc = NamuCrawler(url = sub_url, hop = hop)
+        sub_nc = namuCrawler(url = sub_url, hop = hop)
         sub_nc.construct_toc()
         # print(sub_nc.get_doc_title(), parent_item, sub_nc.hop, max_hop)
         to_return = ""
