@@ -26,7 +26,8 @@ class GetNamuUrl:
             siteSearch=siteDomain,
             siteSearchFilter='i',
             cr = 'countryKR' ,
-            hl = 'ko'
+            hl = 'ko',
+            orTerms = '데뷔'
             
         )
         .execute()
@@ -59,7 +60,8 @@ class GetNamuUrl:
                         siteSearch=siteDomain,
                         siteSearchFilter='i',
                         cr = 'countryKR' ,
-                        hl = 'ko'
+                        hl = 'ko',
+                        orTerms = '데뷔'
                         
                     )
                     .execute()
