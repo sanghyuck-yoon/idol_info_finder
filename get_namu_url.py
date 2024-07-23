@@ -25,7 +25,8 @@ class GetNamuUrl:
             cx=self.search_engine_key,
             siteSearch=siteDomain,
             siteSearchFilter='i',
-            cr = 'countryKR' 
+            cr = 'countryKR' ,
+            hl = 'ko'
             
         )
         .execute()
@@ -57,7 +58,8 @@ class GetNamuUrl:
                         cx=self.search_engine_key,
                         siteSearch=siteDomain,
                         siteSearchFilter='i',
-                        cr = 'countryKR' 
+                        cr = 'countryKR' ,
+                        hl = 'ko'
                         
                     )
                     .execute()
