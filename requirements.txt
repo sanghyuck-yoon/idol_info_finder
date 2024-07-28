@@ -1,0 +1,7 @@
+google-cloud-bigquery
+openai
+langchain-community
+langchain-google-vertexai
+langchain-google-community
+requests
+beautifulsoup4

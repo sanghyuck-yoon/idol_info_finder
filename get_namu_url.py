@@ -68,7 +68,9 @@ class GetNamuUrl:
                     )
                     
             except:
+                print(query)
                 print("Can't Not found Urls from keyword") #수정된 검색어가 없는 경우
+                return 'N/A'
 
         url = res['items'][0]['formattedUrl']
         url = re.sub(r'//en\.', '//', url) #영문 페이지 반환 시, 한국어 페이지로 반환하도록 url 변경
