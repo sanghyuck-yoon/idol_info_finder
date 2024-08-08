@@ -48,7 +48,9 @@ class NamuCrawler():
 
     def get_doc_title(self) -> str:
         """URL에서 현재 문서의 타이틀(주제) 반환 """
-        return self.soup.find("a", href = "/w/"+self.url.split("/w/")[-1].split("?")[0]).get_text()
+        print("/w/"+self.url.split("/w/")[-1].split("?")[0])
+        # return self.soup.find("a", href = "/w/"+self.url.split("/w/")[-1].split("?")[0]).get_text()
+        return "/w/"+self.url.split("/w/")[-1].split("?")[0]
 
     def print_toc(self):
         """포맷화된 목차 프린트 메서드"""
