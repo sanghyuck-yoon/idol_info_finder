@@ -32,17 +32,14 @@ class NamuCrawler():
 
         #목차 아이템들을 하나씩 딕셔너리에 저장(key = s-#.#.#, value = (목차 명, 목차 element))
         pattern = r'^(\d+\.)+' # 제목 파싱용 패턴
-        
-        try:
-            for ele in toc.find_all("span", class_  = "toc-item"):
-                item_value = ele.get_text()
-                numbers = re.match(pattern, item_value).group()
-                text = re.sub(pattern, '', item_value).strip()
-                self.toc_dict[ele.find('a')['href'].replace("#", "")] = (
-                    (numbers, text), self.soup.find('a', id=ele.find('a')['href'].replace("#", ""))
-                )
-        except:
-            pass
+
+        for ele in toc.find_all("span", class_  = "toc-item"):
+            item_value = ele.get_text()
+            numbers = re.match(pattern, item_value).group()
+            text = re.sub(pattern, '', item_value).strip()
+            self.toc_dict[ele.find('a')['href'].replace("#", "")] = (
+                (numbers, text), self.soup.find('a', id=ele.find('a')['href'].replace("#", ""))
+            )
 
         #마지막 원소로 각주영역 저장, 없다면 None 저장
         self.toc_dict['s-f'] = (# 마지막엔 각주 영역
@@ -51,9 +48,7 @@ class NamuCrawler():
 
     def get_doc_title(self) -> str:
         """URL에서 현재 문서의 타이틀(주제) 반환 """
-        print("/w/"+self.url.split("/w/")[-1].split("?")[0])
-        # return self.soup.find("a", href = "/w/"+self.url.split("/w/")[-1].split("?")[0]).get_text()
-        return "/w/"+self.url.split("/w/")[-1].split("?")[0]
+        return self.soup.find("a", href = "/w/"+self.url.split("/w/")[-1].split("?")[0]).get_text()
 
     def print_toc(self):
         """포맷화된 목차 프린트 메서드"""
@@ -77,13 +72,10 @@ class NamuCrawler():
         cur_toc_index = toc_index
         ancestors = []
         for i in range(level):
-            try:
-                ancestors.insert(
-                    0, self.toc_dict.get(f"s-{'.'.join(cur_toc_index.split(sep = '.')[:-1])}")[0]
-                )
-                cur_toc_index = ancestors[-1][0][:-1]
-            except:
-                pass  
+            ancestors.insert(
+                0, self.toc_dict.get(f"s-{'.'.join(cur_toc_index.split(sep = '.')[:-1])}")[0]
+            )
+            cur_toc_index = ancestors[-1][0][:-1]  
         toc_items = "/".join([i[1] for i in ancestors])
         return toc_items
     
