@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from google.api_core import gapic_v1
+from google.api_core import retry as retries
+from google.api_core import retry_async as retries_async
 from typing import (
     Any,
     AsyncIterator,
@@ -22,8 +25,19 @@ from typing import (
     Tuple,
     Optional,
     Iterator,
+    Union,
 )
 
+try:
+    OptionalRetry = Union[retries.Retry, gapic_v1.method._MethodDefault, None]
+    OptionalAsyncRetry = Union[
+        retries_async.AsyncRetry, gapic_v1.method._MethodDefault, None
+    ]
+except AttributeError:  # pragma: NO COVER
+    OptionalRetry = Union[retries.Retry, object, None]  # type: ignore
+    OptionalAsyncRetry = Union[retries_async.AsyncRetry, object, None]  # type: ignore
+
+from google.cloud.aiplatform_v1.types import notebook_execution_job
 from google.cloud.aiplatform_v1.types import notebook_runtime
 from google.cloud.aiplatform_v1.types import notebook_service
 
@@ -52,6 +66,8 @@ class ListNotebookRuntimeTemplatesPager:
         request: notebook_service.ListNotebookRuntimeTemplatesRequest,
         response: notebook_service.ListNotebookRuntimeTemplatesResponse,
         *,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        timeout: Union[float, object] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = ()
     ):
         """Instantiate the pager.
@@ -63,12 +79,17 @@ class ListNotebookRuntimeTemplatesPager:
                 The initial request object.
             response (google.cloud.aiplatform_v1.types.ListNotebookRuntimeTemplatesResponse):
                 The initial response object.
+            retry (google.api_core.retry.Retry): Designation of what errors,
+                if any, should be retried.
+            timeout (float): The timeout for this request.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
         """
         self._method = method
         self._request = notebook_service.ListNotebookRuntimeTemplatesRequest(request)
         self._response = response
+        self._retry = retry
+        self._timeout = timeout
         self._metadata = metadata
 
     def __getattr__(self, name: str) -> Any:
@@ -79,7 +100,12 @@ class ListNotebookRuntimeTemplatesPager:
         yield self._response
         while self._response.next_page_token:
             self._request.page_token = self._response.next_page_token
-            self._response = self._method(self._request, metadata=self._metadata)
+            self._response = self._method(
+                self._request,
+                retry=self._retry,
+                timeout=self._timeout,
+                metadata=self._metadata,
+            )
             yield self._response
 
     def __iter__(self) -> Iterator[notebook_runtime.NotebookRuntimeTemplate]:
@@ -116,6 +142,8 @@ class ListNotebookRuntimeTemplatesAsyncPager:
         request: notebook_service.ListNotebookRuntimeTemplatesRequest,
         response: notebook_service.ListNotebookRuntimeTemplatesResponse,
         *,
+        retry: OptionalAsyncRetry = gapic_v1.method.DEFAULT,
+        timeout: Union[float, object] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = ()
     ):
         """Instantiates the pager.
@@ -127,12 +155,17 @@ class ListNotebookRuntimeTemplatesAsyncPager:
                 The initial request object.
             response (google.cloud.aiplatform_v1.types.ListNotebookRuntimeTemplatesResponse):
                 The initial response object.
+            retry (google.api_core.retry.AsyncRetry): Designation of what errors,
+                if any, should be retried.
+            timeout (float): The timeout for this request.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
         """
         self._method = method
         self._request = notebook_service.ListNotebookRuntimeTemplatesRequest(request)
         self._response = response
+        self._retry = retry
+        self._timeout = timeout
         self._metadata = metadata
 
     def __getattr__(self, name: str) -> Any:
@@ -145,7 +178,12 @@ class ListNotebookRuntimeTemplatesAsyncPager:
         yield self._response
         while self._response.next_page_token:
             self._request.page_token = self._response.next_page_token
-            self._response = await self._method(self._request, metadata=self._metadata)
+            self._response = await self._method(
+                self._request,
+                retry=self._retry,
+                timeout=self._timeout,
+                metadata=self._metadata,
+            )
             yield self._response
 
     def __aiter__(self) -> AsyncIterator[notebook_runtime.NotebookRuntimeTemplate]:
@@ -184,6 +222,8 @@ class ListNotebookRuntimesPager:
         request: notebook_service.ListNotebookRuntimesRequest,
         response: notebook_service.ListNotebookRuntimesResponse,
         *,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        timeout: Union[float, object] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = ()
     ):
         """Instantiate the pager.
@@ -195,12 +235,17 @@ class ListNotebookRuntimesPager:
                 The initial request object.
             response (google.cloud.aiplatform_v1.types.ListNotebookRuntimesResponse):
                 The initial response object.
+            retry (google.api_core.retry.Retry): Designation of what errors,
+                if any, should be retried.
+            timeout (float): The timeout for this request.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
         """
         self._method = method
         self._request = notebook_service.ListNotebookRuntimesRequest(request)
         self._response = response
+        self._retry = retry
+        self._timeout = timeout
         self._metadata = metadata
 
     def __getattr__(self, name: str) -> Any:
@@ -211,7 +256,12 @@ class ListNotebookRuntimesPager:
         yield self._response
         while self._response.next_page_token:
             self._request.page_token = self._response.next_page_token
-            self._response = self._method(self._request, metadata=self._metadata)
+            self._response = self._method(
+                self._request,
+                retry=self._retry,
+                timeout=self._timeout,
+                metadata=self._metadata,
+            )
             yield self._response
 
     def __iter__(self) -> Iterator[notebook_runtime.NotebookRuntime]:
@@ -246,6 +296,8 @@ class ListNotebookRuntimesAsyncPager:
         request: notebook_service.ListNotebookRuntimesRequest,
         response: notebook_service.ListNotebookRuntimesResponse,
         *,
+        retry: OptionalAsyncRetry = gapic_v1.method.DEFAULT,
+        timeout: Union[float, object] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = ()
     ):
         """Instantiates the pager.
@@ -257,12 +309,17 @@ class ListNotebookRuntimesAsyncPager:
                 The initial request object.
             response (google.cloud.aiplatform_v1.types.ListNotebookRuntimesResponse):
                 The initial response object.
+            retry (google.api_core.retry.AsyncRetry): Designation of what errors,
+                if any, should be retried.
+            timeout (float): The timeout for this request.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
         """
         self._method = method
         self._request = notebook_service.ListNotebookRuntimesRequest(request)
         self._response = response
+        self._retry = retry
+        self._timeout = timeout
         self._metadata = metadata
 
     def __getattr__(self, name: str) -> Any:
@@ -275,13 +332,174 @@ class ListNotebookRuntimesAsyncPager:
         yield self._response
         while self._response.next_page_token:
             self._request.page_token = self._response.next_page_token
-            self._response = await self._method(self._request, metadata=self._metadata)
+            self._response = await self._method(
+                self._request,
+                retry=self._retry,
+                timeout=self._timeout,
+                metadata=self._metadata,
+            )
             yield self._response
 
     def __aiter__(self) -> AsyncIterator[notebook_runtime.NotebookRuntime]:
         async def async_generator():
             async for page in self.pages:
                 for response in page.notebook_runtimes:
+                    yield response
+
+        return async_generator()
+
+    def __repr__(self) -> str:
+        return "{0}<{1!r}>".format(self.__class__.__name__, self._response)
+
+
+class ListNotebookExecutionJobsPager:
+    """A pager for iterating through ``list_notebook_execution_jobs`` requests.
+
+    This class thinly wraps an initial
+    :class:`google.cloud.aiplatform_v1.types.ListNotebookExecutionJobsResponse` object, and
+    provides an ``__iter__`` method to iterate through its
+    ``notebook_execution_jobs`` field.
+
+    If there are more pages, the ``__iter__`` method will make additional
+    ``ListNotebookExecutionJobs`` requests and continue to iterate
+    through the ``notebook_execution_jobs`` field on the
+    corresponding responses.
+
+    All the usual :class:`google.cloud.aiplatform_v1.types.ListNotebookExecutionJobsResponse`
+    attributes are available on the pager. If multiple requests are made, only
+    the most recent response is retained, and thus used for attribute lookup.
+    """
+
+    def __init__(
+        self,
+        method: Callable[..., notebook_service.ListNotebookExecutionJobsResponse],
+        request: notebook_service.ListNotebookExecutionJobsRequest,
+        response: notebook_service.ListNotebookExecutionJobsResponse,
+        *,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        timeout: Union[float, object] = gapic_v1.method.DEFAULT,
+        metadata: Sequence[Tuple[str, str]] = ()
+    ):
+        """Instantiate the pager.
+
+        Args:
+            method (Callable): The method that was originally called, and
+                which instantiated this pager.
+            request (google.cloud.aiplatform_v1.types.ListNotebookExecutionJobsRequest):
+                The initial request object.
+            response (google.cloud.aiplatform_v1.types.ListNotebookExecutionJobsResponse):
+                The initial response object.
+            retry (google.api_core.retry.Retry): Designation of what errors,
+                if any, should be retried.
+            timeout (float): The timeout for this request.
+            metadata (Sequence[Tuple[str, str]]): Strings which should be
+                sent along with the request as metadata.
+        """
+        self._method = method
+        self._request = notebook_service.ListNotebookExecutionJobsRequest(request)
+        self._response = response
+        self._retry = retry
+        self._timeout = timeout
+        self._metadata = metadata
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._response, name)
+
+    @property
+    def pages(self) -> Iterator[notebook_service.ListNotebookExecutionJobsResponse]:
+        yield self._response
+        while self._response.next_page_token:
+            self._request.page_token = self._response.next_page_token
+            self._response = self._method(
+                self._request,
+                retry=self._retry,
+                timeout=self._timeout,
+                metadata=self._metadata,
+            )
+            yield self._response
+
+    def __iter__(self) -> Iterator[notebook_execution_job.NotebookExecutionJob]:
+        for page in self.pages:
+            yield from page.notebook_execution_jobs
+
+    def __repr__(self) -> str:
+        return "{0}<{1!r}>".format(self.__class__.__name__, self._response)
+
+
+class ListNotebookExecutionJobsAsyncPager:
+    """A pager for iterating through ``list_notebook_execution_jobs`` requests.
+
+    This class thinly wraps an initial
+    :class:`google.cloud.aiplatform_v1.types.ListNotebookExecutionJobsResponse` object, and
+    provides an ``__aiter__`` method to iterate through its
+    ``notebook_execution_jobs`` field.
+
+    If there are more pages, the ``__aiter__`` method will make additional
+    ``ListNotebookExecutionJobs`` requests and continue to iterate
+    through the ``notebook_execution_jobs`` field on the
+    corresponding responses.
+
+    All the usual :class:`google.cloud.aiplatform_v1.types.ListNotebookExecutionJobsResponse`
+    attributes are available on the pager. If multiple requests are made, only
+    the most recent response is retained, and thus used for attribute lookup.
+    """
+
+    def __init__(
+        self,
+        method: Callable[
+            ..., Awaitable[notebook_service.ListNotebookExecutionJobsResponse]
+        ],
+        request: notebook_service.ListNotebookExecutionJobsRequest,
+        response: notebook_service.ListNotebookExecutionJobsResponse,
+        *,
+        retry: OptionalAsyncRetry = gapic_v1.method.DEFAULT,
+        timeout: Union[float, object] = gapic_v1.method.DEFAULT,
+        metadata: Sequence[Tuple[str, str]] = ()
+    ):
+        """Instantiates the pager.
+
+        Args:
+            method (Callable): The method that was originally called, and
+                which instantiated this pager.
+            request (google.cloud.aiplatform_v1.types.ListNotebookExecutionJobsRequest):
+                The initial request object.
+            response (google.cloud.aiplatform_v1.types.ListNotebookExecutionJobsResponse):
+                The initial response object.
+            retry (google.api_core.retry.AsyncRetry): Designation of what errors,
+                if any, should be retried.
+            timeout (float): The timeout for this request.
+            metadata (Sequence[Tuple[str, str]]): Strings which should be
+                sent along with the request as metadata.
+        """
+        self._method = method
+        self._request = notebook_service.ListNotebookExecutionJobsRequest(request)
+        self._response = response
+        self._retry = retry
+        self._timeout = timeout
+        self._metadata = metadata
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._response, name)
+
+    @property
+    async def pages(
+        self,
+    ) -> AsyncIterator[notebook_service.ListNotebookExecutionJobsResponse]:
+        yield self._response
+        while self._response.next_page_token:
+            self._request.page_token = self._response.next_page_token
+            self._response = await self._method(
+                self._request,
+                retry=self._retry,
+                timeout=self._timeout,
+                metadata=self._metadata,
+            )
+            yield self._response
+
+    def __aiter__(self) -> AsyncIterator[notebook_execution_job.NotebookExecutionJob]:
+        async def async_generator():
+            async for page in self.pages:
+                for response in page.notebook_execution_jobs:
                     yield response
 
         return async_generator()

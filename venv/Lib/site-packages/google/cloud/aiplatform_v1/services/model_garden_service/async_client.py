@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from collections import OrderedDict
-import functools
 import re
 from typing import (
     Dict,
@@ -71,6 +70,10 @@ class ModelGardenServiceAsyncClient:
     publisher_model_path = staticmethod(ModelGardenServiceClient.publisher_model_path)
     parse_publisher_model_path = staticmethod(
         ModelGardenServiceClient.parse_publisher_model_path
+    )
+    reservation_path = staticmethod(ModelGardenServiceClient.reservation_path)
+    parse_reservation_path = staticmethod(
+        ModelGardenServiceClient.parse_reservation_path
     )
     common_billing_account_path = staticmethod(
         ModelGardenServiceClient.common_billing_account_path
@@ -194,10 +197,7 @@ class ModelGardenServiceAsyncClient:
         """
         return self._client._universe_domain
 
-    get_transport_class = functools.partial(
-        type(ModelGardenServiceClient).get_transport_class,
-        type(ModelGardenServiceClient),
-    )
+    get_transport_class = ModelGardenServiceClient.get_transport_class
 
     def __init__(
         self,
@@ -226,9 +226,6 @@ class ModelGardenServiceAsyncClient:
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the ModelGardenServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 

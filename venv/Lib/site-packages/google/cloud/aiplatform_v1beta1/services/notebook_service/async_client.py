@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from collections import OrderedDict
-import functools
 import re
 from typing import (
     Dict,
@@ -110,6 +109,8 @@ class NotebookServiceAsyncClient:
     parse_notebook_runtime_template_path = staticmethod(
         NotebookServiceClient.parse_notebook_runtime_template_path
     )
+    reservation_path = staticmethod(NotebookServiceClient.reservation_path)
+    parse_reservation_path = staticmethod(NotebookServiceClient.parse_reservation_path)
     schedule_path = staticmethod(NotebookServiceClient.schedule_path)
     parse_schedule_path = staticmethod(NotebookServiceClient.parse_schedule_path)
     subnetwork_path = staticmethod(NotebookServiceClient.subnetwork_path)
@@ -236,9 +237,7 @@ class NotebookServiceAsyncClient:
         """
         return self._client._universe_domain
 
-    get_transport_class = functools.partial(
-        type(NotebookServiceClient).get_transport_class, type(NotebookServiceClient)
-    )
+    get_transport_class = NotebookServiceClient.get_transport_class
 
     def __init__(
         self,
@@ -265,9 +264,6 @@ class NotebookServiceAsyncClient:
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the NotebookServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -696,6 +692,8 @@ class NotebookServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -1374,6 +1372,8 @@ class NotebookServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -2148,6 +2148,8 @@ class NotebookServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 

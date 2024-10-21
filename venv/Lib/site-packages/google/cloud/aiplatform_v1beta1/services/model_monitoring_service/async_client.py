@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from collections import OrderedDict
-import functools
 import re
 from typing import (
     Dict,
@@ -108,6 +107,10 @@ class ModelMonitoringServiceAsyncClient:
     )
     parse_model_monitoring_job_path = staticmethod(
         ModelMonitoringServiceClient.parse_model_monitoring_job_path
+    )
+    reservation_path = staticmethod(ModelMonitoringServiceClient.reservation_path)
+    parse_reservation_path = staticmethod(
+        ModelMonitoringServiceClient.parse_reservation_path
     )
     schedule_path = staticmethod(ModelMonitoringServiceClient.schedule_path)
     parse_schedule_path = staticmethod(ModelMonitoringServiceClient.parse_schedule_path)
@@ -235,10 +238,7 @@ class ModelMonitoringServiceAsyncClient:
         """
         return self._client._universe_domain
 
-    get_transport_class = functools.partial(
-        type(ModelMonitoringServiceClient).get_transport_class,
-        type(ModelMonitoringServiceClient),
-    )
+    get_transport_class = ModelMonitoringServiceClient.get_transport_class
 
     def __init__(
         self,
@@ -267,9 +267,6 @@ class ModelMonitoringServiceAsyncClient:
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the ModelMonitoringServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -811,6 +808,8 @@ class ModelMonitoringServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -1305,6 +1304,8 @@ class ModelMonitoringServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -1566,6 +1567,8 @@ class ModelMonitoringServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -1693,6 +1696,8 @@ class ModelMonitoringServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 

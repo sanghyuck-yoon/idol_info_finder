@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from collections import OrderedDict
-import functools
 import re
 from typing import (
     Dict,
@@ -207,10 +206,7 @@ class ReasoningEngineServiceAsyncClient:
         """
         return self._client._universe_domain
 
-    get_transport_class = functools.partial(
-        type(ReasoningEngineServiceClient).get_transport_class,
-        type(ReasoningEngineServiceClient),
-    )
+    get_transport_class = ReasoningEngineServiceClient.get_transport_class
 
     def __init__(
         self,
@@ -239,9 +235,6 @@ class ReasoningEngineServiceAsyncClient:
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the ReasoningEngineServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -653,6 +646,8 @@ class ReasoningEngineServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 

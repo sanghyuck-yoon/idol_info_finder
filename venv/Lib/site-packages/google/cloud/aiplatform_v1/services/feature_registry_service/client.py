@@ -597,9 +597,6 @@ class FeatureRegistryServiceClient(metaclass=FeatureRegistryServiceClientMeta):
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the FeatureRegistryServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -712,7 +709,7 @@ class FeatureRegistryServiceClient(metaclass=FeatureRegistryServiceClientMeta):
                 Type[FeatureRegistryServiceTransport],
                 Callable[..., FeatureRegistryServiceTransport],
             ] = (
-                type(self).get_transport_class(transport)
+                FeatureRegistryServiceClient.get_transport_class(transport)
                 if isinstance(transport, str) or transport is None
                 else cast(Callable[..., FeatureRegistryServiceTransport], transport)
             )
@@ -1098,6 +1095,8 @@ class FeatureRegistryServiceClient(metaclass=FeatureRegistryServiceClientMeta):
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -1176,6 +1175,9 @@ class FeatureRegistryServiceClient(metaclass=FeatureRegistryServiceClientMeta):
                 Updatable fields:
 
                 -  ``labels``
+                -  ``description``
+                -  ``big_query``
+                -  ``big_query.entity_id_columns``
 
                 This corresponds to the ``update_mask`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -1769,6 +1771,8 @@ class FeatureRegistryServiceClient(metaclass=FeatureRegistryServiceClientMeta):
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -1848,7 +1852,9 @@ class FeatureRegistryServiceClient(metaclass=FeatureRegistryServiceClientMeta):
                 -  ``description``
                 -  ``labels``
                 -  ``disable_monitoring`` (Not supported for
-                   FeatureRegistry Feature)
+                   FeatureRegistryService Feature)
+                -  ``point_of_contact`` (Not supported for
+                   FeaturestoreService FeatureStore)
 
                 This corresponds to the ``update_mask`` field
                 on the ``request`` instance; if ``request`` is provided, this

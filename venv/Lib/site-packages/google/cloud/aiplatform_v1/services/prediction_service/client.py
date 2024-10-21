@@ -585,9 +585,6 @@ class PredictionServiceClient(metaclass=PredictionServiceClientMeta):
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the PredictionServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -700,7 +697,7 @@ class PredictionServiceClient(metaclass=PredictionServiceClientMeta):
                 Type[PredictionServiceTransport],
                 Callable[..., PredictionServiceTransport],
             ] = (
-                type(self).get_transport_class(transport)
+                PredictionServiceClient.get_transport_class(transport)
                 if isinstance(transport, str) or transport is None
                 else cast(Callable[..., PredictionServiceTransport], transport)
             )
@@ -2050,9 +2047,14 @@ class PredictionServiceClient(metaclass=PredictionServiceClientMeta):
             request (Union[google.cloud.aiplatform_v1.types.GenerateContentRequest, dict]):
                 The request object. Request message for [PredictionService.GenerateContent].
             model (str):
-                Required. The name of the publisher model requested to
-                serve the prediction. Format:
+                Required. The fully qualified name of the publisher
+                model or tuned model endpoint to use.
+
+                Publisher model format:
                 ``projects/{project}/locations/{location}/publishers/*/models/*``
+
+                Tuned model endpoint format:
+                ``projects/{project}/locations/{location}/endpoints/{endpoint}``
 
                 This corresponds to the ``model`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -2175,9 +2177,14 @@ class PredictionServiceClient(metaclass=PredictionServiceClientMeta):
             request (Union[google.cloud.aiplatform_v1.types.GenerateContentRequest, dict]):
                 The request object. Request message for [PredictionService.GenerateContent].
             model (str):
-                Required. The name of the publisher model requested to
-                serve the prediction. Format:
+                Required. The fully qualified name of the publisher
+                model or tuned model endpoint to use.
+
+                Publisher model format:
                 ``projects/{project}/locations/{location}/publishers/*/models/*``
+
+                Tuned model endpoint format:
+                ``projects/{project}/locations/{location}/endpoints/{endpoint}``
 
                 This corresponds to the ``model`` field
                 on the ``request`` instance; if ``request`` is provided, this

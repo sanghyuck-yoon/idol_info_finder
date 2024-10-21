@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from collections import OrderedDict
-import functools
 import re
 from typing import (
     Dict,
@@ -54,6 +53,7 @@ from google.cloud.aiplatform_v1beta1.types import (
     persistent_resource as gca_persistent_resource,
 )
 from google.cloud.aiplatform_v1beta1.types import persistent_resource_service
+from google.cloud.aiplatform_v1beta1.types import service_networking
 from google.cloud.location import locations_pb2  # type: ignore
 from google.iam.v1 import iam_policy_pb2  # type: ignore
 from google.iam.v1 import policy_pb2  # type: ignore
@@ -87,6 +87,12 @@ class PersistentResourceServiceAsyncClient:
     parse_network_path = staticmethod(
         PersistentResourceServiceClient.parse_network_path
     )
+    network_attachment_path = staticmethod(
+        PersistentResourceServiceClient.network_attachment_path
+    )
+    parse_network_attachment_path = staticmethod(
+        PersistentResourceServiceClient.parse_network_attachment_path
+    )
     notebook_runtime_template_path = staticmethod(
         PersistentResourceServiceClient.notebook_runtime_template_path
     )
@@ -98,6 +104,10 @@ class PersistentResourceServiceAsyncClient:
     )
     parse_persistent_resource_path = staticmethod(
         PersistentResourceServiceClient.parse_persistent_resource_path
+    )
+    reservation_path = staticmethod(PersistentResourceServiceClient.reservation_path)
+    parse_reservation_path = staticmethod(
+        PersistentResourceServiceClient.parse_reservation_path
     )
     common_billing_account_path = staticmethod(
         PersistentResourceServiceClient.common_billing_account_path
@@ -227,10 +237,7 @@ class PersistentResourceServiceAsyncClient:
         """
         return self._client._universe_domain
 
-    get_transport_class = functools.partial(
-        type(PersistentResourceServiceClient).get_transport_class,
-        type(PersistentResourceServiceClient),
-    )
+    get_transport_class = PersistentResourceServiceClient.get_transport_class
 
     def __init__(
         self,
@@ -259,9 +266,6 @@ class PersistentResourceServiceAsyncClient:
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the PersistentResourceServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -697,6 +701,8 @@ class PersistentResourceServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 

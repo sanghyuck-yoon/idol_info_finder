@@ -28,7 +28,7 @@ def dumps(obj: Any, *, pretty: bool = False, **kwargs: Any) -> str:
         pretty: Whether to pretty print the json. If true, the json will be
             indented with 2 spaces (if no indent is provided as part of kwargs).
             Default is False.
-        **kwargs: Additional arguments to pass to json.dumps
+        kwargs: Additional arguments to pass to json.dumps
 
     Returns:
         A json string representation of the object.
@@ -37,7 +37,8 @@ def dumps(obj: Any, *, pretty: bool = False, **kwargs: Any) -> str:
         ValueError: If `default` is passed as a kwarg.
     """
     if "default" in kwargs:
-        raise ValueError("`default` should not be passed to dumps")
+        msg = "`default` should not be passed to dumps"
+        raise ValueError(msg)
     try:
         if pretty:
             indent = kwargs.pop("indent", 2)

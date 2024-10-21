@@ -181,7 +181,7 @@ class InMemoryRateLimiter(BaseRateLimiter):
             the caller should try again later.
         """
         with self._consume_lock:
-            now = time.time()
+            now = time.monotonic()
 
             # initialize on first call to avoid a burst
             if self.last is None:
@@ -249,7 +249,13 @@ class InMemoryRateLimiter(BaseRateLimiter):
             return self._consume()
 
         while not self._consume():
-            await asyncio.sleep(self.check_every_n_seconds)
+            # This code ignores the ASYNC110 warning which is a false positive in this
+            # case.
+            # There is no external actor that can mark that the Event is done
+            # since the tokens are managed by the rate limiter itself.
+            # It needs to wake up to re-fill the tokens.
+            # https://docs.astral.sh/ruff/rules/async-busy-wait/
+            await asyncio.sleep(self.check_every_n_seconds)  # ruff: noqa: ASYNC110
         return True
 
 

@@ -1,8 +1,8 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from langchain_core.embeddings import Embeddings
-from langchain_core.pydantic_v1 import BaseModel, Field, root_validator
 from langchain_core.utils import get_from_dict_or_env
+from pydantic import BaseModel, Field, model_validator
 
 
 class ZhipuAIEmbeddings(BaseModel, Embeddings):
@@ -70,9 +70,15 @@ class ZhipuAIEmbeddings(BaseModel, Embeddings):
     """Model name"""
     api_key: str
     """Automatically inferred from env var `ZHIPU_API_KEY` if not provided."""
+    dimensions: Optional[int] = None
+    """The number of dimensions the resulting output embeddings should have.
 
-    @root_validator(pre=True)
-    def validate_environment(cls, values: Dict) -> Dict:
+    Only supported in `embedding-3` and later models.
+    """
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_environment(cls, values: Dict) -> Any:
         """Validate that auth token exists in environment."""
         values["api_key"] = get_from_dict_or_env(values, "api_key", "ZHIPUAI_API_KEY")
         try:
@@ -110,6 +116,13 @@ class ZhipuAIEmbeddings(BaseModel, Embeddings):
             A list of embeddings for each document in the input list.
             Each embedding is represented as a list of float values.
         """
-        resp = self.client.embeddings.create(model=self.model, input=texts)
+        if self.dimensions is not None:
+            resp = self.client.embeddings.create(
+                model=self.model,
+                input=texts,
+                dimensions=self.dimensions,
+            )
+        else:
+            resp = self.client.embeddings.create(model=self.model, input=texts)
         embeddings = [r.embedding for r in resp.data]
         return embeddings

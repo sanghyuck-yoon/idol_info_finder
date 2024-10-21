@@ -912,9 +912,6 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
 
     It sends JSON representations of protocol buffers over HTTP/1.1
 
-    NOTE: This REST transport functionality is currently in a beta
-    state (preview). We welcome your feedback via an issue in this
-    library's source repository. Thank you!
     """
 
     def __init__(
@@ -934,39 +931,35 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
     ) -> None:
         """Instantiate the transport.
 
-        NOTE: This REST transport functionality is currently in a beta
-        state (preview). We welcome your feedback via a GitHub issue in
-        this library's repository. Thank you!
+        Args:
+            host (Optional[str]):
+                 The hostname to connect to (default: 'aiplatform.googleapis.com').
+            credentials (Optional[google.auth.credentials.Credentials]): The
+                authorization credentials to attach to requests. These
+                credentials identify the application to the service; if none
+                are specified, the client will attempt to ascertain the
+                credentials from the environment.
 
-         Args:
-             host (Optional[str]):
-                  The hostname to connect to (default: 'aiplatform.googleapis.com').
-             credentials (Optional[google.auth.credentials.Credentials]): The
-                 authorization credentials to attach to requests. These
-                 credentials identify the application to the service; if none
-                 are specified, the client will attempt to ascertain the
-                 credentials from the environment.
-
-             credentials_file (Optional[str]): A file with credentials that can
-                 be loaded with :func:`google.auth.load_credentials_from_file`.
-                 This argument is ignored if ``channel`` is provided.
-             scopes (Optional(Sequence[str])): A list of scopes. This argument is
-                 ignored if ``channel`` is provided.
-             client_cert_source_for_mtls (Callable[[], Tuple[bytes, bytes]]): Client
-                 certificate to configure mutual TLS HTTP channel. It is ignored
-                 if ``channel`` is provided.
-             quota_project_id (Optional[str]): An optional project to use for billing
-                 and quota.
-             client_info (google.api_core.gapic_v1.client_info.ClientInfo):
-                 The client info used to send a user-agent string along with
-                 API requests. If ``None``, then default info will be used.
-                 Generally, you only need to set this if you are developing
-                 your own client library.
-             always_use_jwt_access (Optional[bool]): Whether self signed JWT should
-                 be used for service account credentials.
-             url_scheme: the protocol scheme for the API endpoint.  Normally
-                 "https", but for testing or local servers,
-                 "http" can be specified.
+            credentials_file (Optional[str]): A file with credentials that can
+                be loaded with :func:`google.auth.load_credentials_from_file`.
+                This argument is ignored if ``channel`` is provided.
+            scopes (Optional(Sequence[str])): A list of scopes. This argument is
+                ignored if ``channel`` is provided.
+            client_cert_source_for_mtls (Callable[[], Tuple[bytes, bytes]]): Client
+                certificate to configure mutual TLS HTTP channel. It is ignored
+                if ``channel`` is provided.
+            quota_project_id (Optional[str]): An optional project to use for billing
+                and quota.
+            client_info (google.api_core.gapic_v1.client_info.ClientInfo):
+                The client info used to send a user-agent string along with
+                API requests. If ``None``, then default info will be used.
+                Generally, you only need to set this if you are developing
+                your own client library.
+            always_use_jwt_access (Optional[bool]): Whether self signed JWT should
+                be used for service account credentials.
+            url_scheme: the protocol scheme for the API endpoint.  Normally
+                "https", but for testing or local servers,
+                "http" can be specified.
         """
         # Run the base constructor
         # TODO(yon-mg): resolve other ctor params i.e. scopes, quota, etc.
@@ -3100,6 +3093,11 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
                     "uri": "/v1beta1/{parent=projects/*/locations/*}/datasets",
                     "body": "dataset",
                 },
+                {
+                    "method": "post",
+                    "uri": "/v1beta1/datasets",
+                    "body": "dataset",
+                },
             ]
             request, metadata = self._interceptor.pre_create_dataset(request, metadata)
             pb_request = dataset_service.CreateDatasetRequest.pb(request)
@@ -3108,7 +3106,7 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             # Jsonify the request body
 
             body = json_format.MessageToJson(
-                transcoded_request["body"], use_integers_for_enums=False
+                transcoded_request["body"], use_integers_for_enums=True
             )
             uri = transcoded_request["uri"]
             method = transcoded_request["method"]
@@ -3117,10 +3115,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -3192,6 +3192,11 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
                     "uri": "/v1beta1/{parent=projects/*/locations/*/datasets/*}/datasetVersions",
                     "body": "dataset_version",
                 },
+                {
+                    "method": "post",
+                    "uri": "/v1beta1/{parent=datasets/*}/datasetVersions",
+                    "body": "dataset_version",
+                },
             ]
             request, metadata = self._interceptor.pre_create_dataset_version(
                 request, metadata
@@ -3202,7 +3207,7 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             # Jsonify the request body
 
             body = json_format.MessageToJson(
-                transcoded_request["body"], use_integers_for_enums=False
+                transcoded_request["body"], use_integers_for_enums=True
             )
             uri = transcoded_request["uri"]
             method = transcoded_request["method"]
@@ -3211,10 +3216,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -3285,6 +3292,10 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
                     "method": "delete",
                     "uri": "/v1beta1/{name=projects/*/locations/*/datasets/*}",
                 },
+                {
+                    "method": "delete",
+                    "uri": "/v1beta1/{name=datasets/*}",
+                },
             ]
             request, metadata = self._interceptor.pre_delete_dataset(request, metadata)
             pb_request = dataset_service.DeleteDatasetRequest.pb(request)
@@ -3297,10 +3308,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -3370,6 +3383,10 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
                     "method": "delete",
                     "uri": "/v1beta1/{name=projects/*/locations/*/datasets/*/datasetVersions/*}",
                 },
+                {
+                    "method": "delete",
+                    "uri": "/v1beta1/{name=datasets/*/datasetVersions/*}",
+                },
             ]
             request, metadata = self._interceptor.pre_delete_dataset_version(
                 request, metadata
@@ -3384,10 +3401,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -3471,10 +3490,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -3553,7 +3574,7 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             # Jsonify the request body
 
             body = json_format.MessageToJson(
-                transcoded_request["body"], use_integers_for_enums=False
+                transcoded_request["body"], use_integers_for_enums=True
             )
             uri = transcoded_request["uri"]
             method = transcoded_request["method"]
@@ -3562,10 +3583,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -3649,10 +3672,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -3723,6 +3748,10 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
                     "method": "get",
                     "uri": "/v1beta1/{name=projects/*/locations/*/datasets/*}",
                 },
+                {
+                    "method": "get",
+                    "uri": "/v1beta1/{name=datasets/*}",
+                },
             ]
             request, metadata = self._interceptor.pre_get_dataset(request, metadata)
             pb_request = dataset_service.GetDatasetRequest.pb(request)
@@ -3735,10 +3764,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -3807,6 +3838,10 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
                     "method": "get",
                     "uri": "/v1beta1/{name=projects/*/locations/*/datasets/*/datasetVersions/*}",
                 },
+                {
+                    "method": "get",
+                    "uri": "/v1beta1/{name=datasets/*/datasetVersions/*}",
+                },
             ]
             request, metadata = self._interceptor.pre_get_dataset_version(
                 request, metadata
@@ -3821,10 +3856,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -3905,7 +3942,7 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             # Jsonify the request body
 
             body = json_format.MessageToJson(
-                transcoded_request["body"], use_integers_for_enums=False
+                transcoded_request["body"], use_integers_for_enums=True
             )
             uri = transcoded_request["uri"]
             method = transcoded_request["method"]
@@ -3914,10 +3951,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -4001,10 +4040,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -4087,10 +4128,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -4161,6 +4204,10 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
                     "method": "get",
                     "uri": "/v1beta1/{parent=projects/*/locations/*}/datasets",
                 },
+                {
+                    "method": "get",
+                    "uri": "/v1beta1/datasets",
+                },
             ]
             request, metadata = self._interceptor.pre_list_datasets(request, metadata)
             pb_request = dataset_service.ListDatasetsRequest.pb(request)
@@ -4173,10 +4220,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -4247,6 +4296,10 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
                     "method": "get",
                     "uri": "/v1beta1/{parent=projects/*/locations/*/datasets/*}/datasetVersions",
                 },
+                {
+                    "method": "get",
+                    "uri": "/v1beta1/{parent=datasets/*}/datasetVersions",
+                },
             ]
             request, metadata = self._interceptor.pre_list_dataset_versions(
                 request, metadata
@@ -4261,10 +4314,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -4349,10 +4404,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -4424,6 +4481,10 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
                     "method": "get",
                     "uri": "/v1beta1/{name=projects/*/locations/*/datasets/*/datasetVersions/*}:restore",
                 },
+                {
+                    "method": "get",
+                    "uri": "/v1beta1/{name=datasets/*/datasetVersions/*}:restore",
+                },
             ]
             request, metadata = self._interceptor.pre_restore_dataset_version(
                 request, metadata
@@ -4438,10 +4499,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -4524,10 +4587,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -4601,6 +4666,11 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
                     "uri": "/v1beta1/{dataset.name=projects/*/locations/*/datasets/*}",
                     "body": "dataset",
                 },
+                {
+                    "method": "patch",
+                    "uri": "/v1beta1/{dataset.name=datasets/*}",
+                    "body": "dataset",
+                },
             ]
             request, metadata = self._interceptor.pre_update_dataset(request, metadata)
             pb_request = dataset_service.UpdateDatasetRequest.pb(request)
@@ -4609,7 +4679,7 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             # Jsonify the request body
 
             body = json_format.MessageToJson(
-                transcoded_request["body"], use_integers_for_enums=False
+                transcoded_request["body"], use_integers_for_enums=True
             )
             uri = transcoded_request["uri"]
             method = transcoded_request["method"]
@@ -4618,10 +4688,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)
@@ -4694,6 +4766,11 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
                     "uri": "/v1beta1/{dataset_version.name=projects/*/locations/*/datasets/*/datasetVersions/*}",
                     "body": "dataset_version",
                 },
+                {
+                    "method": "patch",
+                    "uri": "/v1beta1/{dataset_version.name=datasets/*/datasetVersions/*}",
+                    "body": "dataset_version",
+                },
             ]
             request, metadata = self._interceptor.pre_update_dataset_version(
                 request, metadata
@@ -4704,7 +4781,7 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             # Jsonify the request body
 
             body = json_format.MessageToJson(
-                transcoded_request["body"], use_integers_for_enums=False
+                transcoded_request["body"], use_integers_for_enums=True
             )
             uri = transcoded_request["uri"]
             method = transcoded_request["method"]
@@ -4713,10 +4790,12 @@ class DatasetServiceRestTransport(DatasetServiceTransport):
             query_params = json.loads(
                 json_format.MessageToJson(
                     transcoded_request["query_params"],
-                    use_integers_for_enums=False,
+                    use_integers_for_enums=True,
                 )
             )
             query_params.update(self._get_unset_required_fields(query_params))
+
+            query_params["$alt"] = "json;enum-encoding=int"
 
             # Send the request
             headers = dict(metadata)

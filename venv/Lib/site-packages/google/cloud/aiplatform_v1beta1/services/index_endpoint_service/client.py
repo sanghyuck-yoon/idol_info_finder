@@ -241,6 +241,28 @@ class IndexEndpointServiceClient(metaclass=IndexEndpointServiceClientMeta):
         return m.groupdict() if m else {}
 
     @staticmethod
+    def reservation_path(
+        project_id_or_number: str,
+        zone: str,
+        reservation_name: str,
+    ) -> str:
+        """Returns a fully-qualified reservation string."""
+        return "projects/{project_id_or_number}/zones/{zone}/reservations/{reservation_name}".format(
+            project_id_or_number=project_id_or_number,
+            zone=zone,
+            reservation_name=reservation_name,
+        )
+
+    @staticmethod
+    def parse_reservation_path(path: str) -> Dict[str, str]:
+        """Parses a reservation path into its component segments."""
+        m = re.match(
+            r"^projects/(?P<project_id_or_number>.+?)/zones/(?P<zone>.+?)/reservations/(?P<reservation_name>.+?)$",
+            path,
+        )
+        return m.groupdict() if m else {}
+
+    @staticmethod
     def common_billing_account_path(
         billing_account: str,
     ) -> str:
@@ -588,9 +610,6 @@ class IndexEndpointServiceClient(metaclass=IndexEndpointServiceClientMeta):
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the IndexEndpointServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -703,7 +722,7 @@ class IndexEndpointServiceClient(metaclass=IndexEndpointServiceClientMeta):
                 Type[IndexEndpointServiceTransport],
                 Callable[..., IndexEndpointServiceTransport],
             ] = (
-                type(self).get_transport_class(transport)
+                IndexEndpointServiceClient.get_transport_class(transport)
                 if isinstance(transport, str) or transport is None
                 else cast(Callable[..., IndexEndpointServiceTransport], transport)
             )
@@ -1074,6 +1093,8 @@ class IndexEndpointServiceClient(metaclass=IndexEndpointServiceClientMeta):
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 

@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from collections import OrderedDict
-import functools
 import re
 from typing import (
     Dict,
@@ -216,10 +215,7 @@ class FeaturestoreServiceAsyncClient:
         """
         return self._client._universe_domain
 
-    get_transport_class = functools.partial(
-        type(FeaturestoreServiceClient).get_transport_class,
-        type(FeaturestoreServiceClient),
-    )
+    get_transport_class = FeaturestoreServiceClient.get_transport_class
 
     def __init__(
         self,
@@ -248,9 +244,6 @@ class FeaturestoreServiceAsyncClient:
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the FeaturestoreServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -674,6 +667,8 @@ class FeaturestoreServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -1354,6 +1349,8 @@ class FeaturestoreServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -2180,6 +2177,8 @@ class FeaturestoreServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -2255,7 +2254,9 @@ class FeaturestoreServiceAsyncClient:
                 -  ``description``
                 -  ``labels``
                 -  ``disable_monitoring`` (Not supported for
-                   FeatureRegistry Feature)
+                   FeatureRegistryService Feature)
+                -  ``point_of_contact`` (Not supported for
+                   FeaturestoreService FeatureStore)
 
                 This corresponds to the ``update_mask`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -3231,6 +3232,8 @@ class FeaturestoreServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 

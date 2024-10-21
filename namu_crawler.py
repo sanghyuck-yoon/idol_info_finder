@@ -32,6 +32,8 @@ class NamuCrawler():
 
         #목차 아이템들을 하나씩 딕셔너리에 저장(key = s-#.#.#, value = (목차 명, 목차 element))
         pattern = r'^(\d+\.)+' # 제목 파싱용 패턴
+        
+        print(toc)
 
         for ele in toc.find_all("span", class_  = "toc-item"):
             item_value = ele.get_text()

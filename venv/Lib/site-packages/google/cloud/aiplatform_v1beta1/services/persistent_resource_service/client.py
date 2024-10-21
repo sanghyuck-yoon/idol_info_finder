@@ -58,6 +58,7 @@ from google.cloud.aiplatform_v1beta1.types import (
     persistent_resource as gca_persistent_resource,
 )
 from google.cloud.aiplatform_v1beta1.types import persistent_resource_service
+from google.cloud.aiplatform_v1beta1.types import service_networking
 from google.cloud.location import locations_pb2  # type: ignore
 from google.iam.v1 import iam_policy_pb2  # type: ignore
 from google.iam.v1 import policy_pb2  # type: ignore
@@ -220,6 +221,28 @@ class PersistentResourceServiceClient(metaclass=PersistentResourceServiceClientM
         return m.groupdict() if m else {}
 
     @staticmethod
+    def network_attachment_path(
+        project: str,
+        region: str,
+        networkattachment: str,
+    ) -> str:
+        """Returns a fully-qualified network_attachment string."""
+        return "projects/{project}/regions/{region}/networkAttachments/{networkattachment}".format(
+            project=project,
+            region=region,
+            networkattachment=networkattachment,
+        )
+
+    @staticmethod
+    def parse_network_attachment_path(path: str) -> Dict[str, str]:
+        """Parses a network_attachment path into its component segments."""
+        m = re.match(
+            r"^projects/(?P<project>.+?)/regions/(?P<region>.+?)/networkAttachments/(?P<networkattachment>.+?)$",
+            path,
+        )
+        return m.groupdict() if m else {}
+
+    @staticmethod
     def notebook_runtime_template_path(
         project: str,
         location: str,
@@ -259,6 +282,28 @@ class PersistentResourceServiceClient(metaclass=PersistentResourceServiceClientM
         """Parses a persistent_resource path into its component segments."""
         m = re.match(
             r"^projects/(?P<project>.+?)/locations/(?P<location>.+?)/persistentResources/(?P<persistent_resource>.+?)$",
+            path,
+        )
+        return m.groupdict() if m else {}
+
+    @staticmethod
+    def reservation_path(
+        project_id_or_number: str,
+        zone: str,
+        reservation_name: str,
+    ) -> str:
+        """Returns a fully-qualified reservation string."""
+        return "projects/{project_id_or_number}/zones/{zone}/reservations/{reservation_name}".format(
+            project_id_or_number=project_id_or_number,
+            zone=zone,
+            reservation_name=reservation_name,
+        )
+
+    @staticmethod
+    def parse_reservation_path(path: str) -> Dict[str, str]:
+        """Parses a reservation path into its component segments."""
+        m = re.match(
+            r"^projects/(?P<project_id_or_number>.+?)/zones/(?P<zone>.+?)/reservations/(?P<reservation_name>.+?)$",
             path,
         )
         return m.groupdict() if m else {}
@@ -613,9 +658,6 @@ class PersistentResourceServiceClient(metaclass=PersistentResourceServiceClientM
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the PersistentResourceServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -730,7 +772,7 @@ class PersistentResourceServiceClient(metaclass=PersistentResourceServiceClientM
                 Type[PersistentResourceServiceTransport],
                 Callable[..., PersistentResourceServiceTransport],
             ] = (
-                type(self).get_transport_class(transport)
+                PersistentResourceServiceClient.get_transport_class(transport)
                 if isinstance(transport, str) or transport is None
                 else cast(Callable[..., PersistentResourceServiceTransport], transport)
             )
@@ -1134,6 +1176,8 @@ class PersistentResourceServiceClient(metaclass=PersistentResourceServiceClientM
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 

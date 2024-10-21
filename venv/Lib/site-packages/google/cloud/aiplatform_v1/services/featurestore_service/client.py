@@ -622,9 +622,6 @@ class FeaturestoreServiceClient(metaclass=FeaturestoreServiceClientMeta):
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the FeaturestoreServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -737,7 +734,7 @@ class FeaturestoreServiceClient(metaclass=FeaturestoreServiceClientMeta):
                 Type[FeaturestoreServiceTransport],
                 Callable[..., FeaturestoreServiceTransport],
             ] = (
-                type(self).get_transport_class(transport)
+                FeaturestoreServiceClient.get_transport_class(transport)
                 if isinstance(transport, str) or transport is None
                 else cast(Callable[..., FeaturestoreServiceTransport], transport)
             )
@@ -1125,6 +1122,8 @@ class FeaturestoreServiceClient(metaclass=FeaturestoreServiceClientMeta):
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -1790,6 +1789,8 @@ class FeaturestoreServiceClient(metaclass=FeaturestoreServiceClientMeta):
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -2598,6 +2599,8 @@ class FeaturestoreServiceClient(metaclass=FeaturestoreServiceClientMeta):
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -2673,7 +2676,9 @@ class FeaturestoreServiceClient(metaclass=FeaturestoreServiceClientMeta):
                 -  ``description``
                 -  ``labels``
                 -  ``disable_monitoring`` (Not supported for
-                   FeatureRegistry Feature)
+                   FeatureRegistryService Feature)
+                -  ``point_of_contact`` (Not supported for
+                   FeaturestoreService FeatureStore)
 
                 This corresponds to the ``update_mask`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -3630,6 +3635,8 @@ class FeaturestoreServiceClient(metaclass=FeaturestoreServiceClientMeta):
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 

@@ -38,8 +38,9 @@ from ray.data.block import Block, BlockAccessor
 try:
     from ray.data.datasource.datasink import Datasink
 except ImportError:
-    # If datasink cannot be imported, Ray 2.9.3 is not installed
+    # If datasink cannot be imported, Ray >=2.9.3 is not installed
     Datasink = None
+
 
 DEFAULT_MAX_RETRY_CNT = 10
 RATE_LIMIT_EXCEEDED_SLEEP_TIME = 11
@@ -49,15 +50,17 @@ bq_info = client_info.ClientInfo(
     gapic_version=_BQ_GAPIC_VERSION, user_agent=f"ray-on-vertex/{_BQ_GAPIC_VERSION}"
 )
 
+
+# BigQuery write for Ray 2.33.0 and 2.9.3
 if Datasink is None:
     _BigQueryDatasink = None
 else:
-    # BigQuery write for Ray 2.9.3
+
     class _BigQueryDatasink(Datasink):
         def __init__(
             self,
             dataset: str,
-            project_id: str = None,
+            project_id: Optional[str] = None,
             max_retry_cnt: int = DEFAULT_MAX_RETRY_CNT,
             overwrite_table: Optional[bool] = True,
         ) -> None:

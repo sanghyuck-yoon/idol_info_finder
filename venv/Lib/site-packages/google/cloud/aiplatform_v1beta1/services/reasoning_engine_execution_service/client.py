@@ -565,9 +565,6 @@ class ReasoningEngineExecutionServiceClient(
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the ReasoningEngineExecutionServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -686,7 +683,7 @@ class ReasoningEngineExecutionServiceClient(
                 Type[ReasoningEngineExecutionServiceTransport],
                 Callable[..., ReasoningEngineExecutionServiceTransport],
             ] = (
-                type(self).get_transport_class(transport)
+                ReasoningEngineExecutionServiceClient.get_transport_class(transport)
                 if isinstance(transport, str) or transport is None
                 else cast(
                     Callable[..., ReasoningEngineExecutionServiceTransport], transport

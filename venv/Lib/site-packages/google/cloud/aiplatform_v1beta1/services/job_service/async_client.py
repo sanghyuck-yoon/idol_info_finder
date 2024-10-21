@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from collections import OrderedDict
-import functools
 import re
 from typing import (
     Dict,
@@ -153,6 +152,8 @@ class JobServiceAsyncClient:
     parse_persistent_resource_path = staticmethod(
         JobServiceClient.parse_persistent_resource_path
     )
+    reservation_path = staticmethod(JobServiceClient.reservation_path)
+    parse_reservation_path = staticmethod(JobServiceClient.parse_reservation_path)
     tensorboard_path = staticmethod(JobServiceClient.tensorboard_path)
     parse_tensorboard_path = staticmethod(JobServiceClient.parse_tensorboard_path)
     trial_path = staticmethod(JobServiceClient.trial_path)
@@ -273,9 +274,7 @@ class JobServiceAsyncClient:
         """
         return self._client._universe_domain
 
-    get_transport_class = functools.partial(
-        type(JobServiceClient).get_transport_class, type(JobServiceClient)
-    )
+    get_transport_class = JobServiceClient.get_transport_class
 
     def __init__(
         self,
@@ -300,9 +299,6 @@ class JobServiceAsyncClient:
                 If a Callable is given, it will be called with the same set of initialization
                 arguments as used in the JobServiceTransport constructor.
                 If set to None, a transport is chosen automatically.
-                NOTE: "rest" transport functionality is currently in a
-                beta state (preview). We welcome your feedback via an
-                issue in this library's source repository.
             client_options (Optional[Union[google.api_core.client_options.ClientOptions, dict]]):
                 Custom options for the client.
 
@@ -699,6 +695,8 @@ class JobServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -1286,6 +1284,8 @@ class JobServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -1878,6 +1878,8 @@ class JobServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -2467,6 +2469,8 @@ class JobServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -2930,6 +2934,8 @@ class JobServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -3299,6 +3305,8 @@ class JobServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -3818,6 +3826,8 @@ class JobServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 
@@ -4054,6 +4064,8 @@ class JobServiceAsyncClient:
             method=rpc,
             request=request,
             response=response,
+            retry=retry,
+            timeout=timeout,
             metadata=metadata,
         )
 

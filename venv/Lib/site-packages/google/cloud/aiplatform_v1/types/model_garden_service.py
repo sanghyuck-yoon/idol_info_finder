@@ -62,11 +62,16 @@ class GetPublisherModelRequest(proto.Message):
         language_code (str):
             Optional. The IETF BCP-47 language code
             representing the language in which the publisher
-            model's text information should be written in
-            (see go/bcp47).
+            model's text information should be written in.
         view (google.cloud.aiplatform_v1.types.PublisherModelView):
             Optional. PublisherModel view specifying
             which fields to read.
+        is_hugging_face_model (bool):
+            Optional. Boolean indicates whether the
+            requested model is a Hugging Face model.
+        hugging_face_token (str):
+            Optional. Token used to access Hugging Face
+            gated models.
     """
 
     name: str = proto.Field(
@@ -81,6 +86,14 @@ class GetPublisherModelRequest(proto.Message):
         proto.ENUM,
         number=3,
         enum="PublisherModelView",
+    )
+    is_hugging_face_model: bool = proto.Field(
+        proto.BOOL,
+        number=5,
+    )
+    hugging_face_token: str = proto.Field(
+        proto.STRING,
+        number=6,
     )
 
 
