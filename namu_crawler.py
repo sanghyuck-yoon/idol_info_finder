@@ -3,6 +3,7 @@
 import re
 import requests
 from bs4 import BeautifulSoup
+import urllib.parse
 
 class NamuCrawler():
     """나무 위키 문서 크롤러 클래스"""
@@ -14,9 +15,11 @@ class NamuCrawler():
         self.soup = BeautifulSoup(html_doc.text, 'html.parser')
         self.toc_dict = {}
 
-    def construct_toc(self):
+    def construct_toc(self) -> bool:
         """## 목차(TOC) 정보 추출 및 TOC 딕셔너리 구성"""
-        toc = self.soup.find("div", class_ = 'toc-indent')
+        if (toc := self.soup.find("div", class_ = 'toc-indent')) == None:
+            return False # "해당 문서를 찾을 수 없습니다."의 비정상 경우 False로 종료
+
 
         html_str = str(self.soup)
         start_pos = html_str.find(str('<body>')) + len(str('<body>'))
@@ -32,8 +35,6 @@ class NamuCrawler():
 
         #목차 아이템들을 하나씩 딕셔너리에 저장(key = s-#.#.#, value = (목차 명, 목차 element))
         pattern = r'^(\d+\.)+' # 제목 파싱용 패턴
-        
-        print(toc)
 
         for ele in toc.find_all("span", class_  = "toc-item"):
             item_value = ele.get_text()
@@ -47,10 +48,13 @@ class NamuCrawler():
         self.toc_dict['s-f'] = (# 마지막엔 각주 영역
             ("EOD.", 'FOOTNOTES'), self.soup.find("div", class_ = 'wiki-macro-footnote')
         ) 
-
+        return True # 정상 종료
+    
     def get_doc_title(self) -> str:
         """URL에서 현재 문서의 타이틀(주제) 반환 """
-        return self.soup.find("a", href = "/w/"+self.url.split("/w/")[-1].split("?")[0]).get_text()
+        topic = self.url.split("/w/")[-1].split("?")[0]
+        # topic = urllib.parse.unquote(topic)
+        return self.soup.find("a", href = "/w/"+topic).get_text()
 
     def print_toc(self):
         """포맷화된 목차 프린트 메서드"""

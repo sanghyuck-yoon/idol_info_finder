@@ -17,10 +17,13 @@ class NamuLoader(BaseLoader):
         if (self.verbose) == True:
             self.base_nc.print_toc()
 
-    def make_sub_nc(self, parent_nc, sub_url, hop, parent_meta):
+    def make_sub_nc(self, parent_nc, sub_url, hop, parent_meta) -> List[Document]:
         start = time.time()
         
         sub_nc = NamuCrawler(url = sub_url, hop = hop)
+        
+        if sub_nc.toc_dict is None:
+            return None
         
         if self.verbose:
             formatted_str = f"{'  '*sub_nc.hop}Sub Doc {sub_nc.get_doc_title()}"
@@ -35,8 +38,11 @@ class NamuLoader(BaseLoader):
 
         return to_return_docs
     
-    def get_docs(self, nc, s, parent_meta = None):
+    def get_docs(self, nc, s, parent_meta = None) -> List[Document]:
         """본문 내용 가져오기"""
+        if nc.toc_dict is None:
+            return None
+        
         cur_toc_item, content = nc.get_content_heading(s)
         if parent_meta == None:
             parent_page_index = ""
@@ -54,6 +60,7 @@ class NamuLoader(BaseLoader):
             )
             
         meta_data = {
+            "page_topic" : nc.get_doc_title(),
             "base_page_url" : parent_meta['base_page_url'] if parent_meta else nc.url,
             "parent_page_url" : parent_meta['current_page_url'] if parent_meta else None,
             "current_page_url" : nc.url,
