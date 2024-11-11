@@ -14,7 +14,7 @@ class NamuCrawler():
         html_doc = self.session.get(url)
         self.soup = BeautifulSoup(html_doc.text, 'html.parser')
         self.toc_dict = {}
-
+        
     def construct_toc(self) -> bool:
         """## 목차(TOC) 정보 추출 및 TOC 딕셔너리 구성"""
         if (toc := self.soup.find("div", class_ = 'toc-indent')) == None:
@@ -153,9 +153,9 @@ class NamuCrawler():
             if element.find("dl", class_ = 'wiki-folding') is not None:
                 continue
             
-            # 만약 테이블 요소를 가지고 있거나 자체가 테이블 클래스라면 테이블을 strip하는 함수 적용
-            if element.find("table", class_ = 'wiki-table') is not None or element.get('class')[0] == 'wiki-table':
-                text_content.append(self.strip_table(element))
+            # 만약 테이블 요소를 가지고 있거나 자체가 테이블 클래스라면 테이블을 strip하는 함수 적용 => 테이블 파싱 & LLM으로 복구하는 코드로 변경 예정
+            # if element.find("table", class_ = 'wiki-table') is not None or element.get('class')[0] == 'wiki-table':
+            #     text_content.append(self.strip_table(element))
 
             # 만약 각주가 있는 엘리먼트라면 각주를 strip하는 함수 적용
             elif element.find("a", class_ = 'wiki-fn-content') is not None:
@@ -196,3 +196,55 @@ class NamuCrawler():
             return (self.toc_dict.get(heading_idx)[0], [self.toc_dict.get(heading_idx)[1].get_text()])
         return self.get_content_between_tags(head = self.toc_dict.get(heading_idx)[0], start_tag= start_tag, end_tag= end_tag)
     
+    def table_to_array (self, ele) -> str:
+        """
+            HTML Table을 2차원 배열로 치환 -> LLM으로 JSON 변환하는 함수
+            병합된 행이 있으면 행을 먼저 분할하고 각 행에 넣어준 뒤에 2차원 배열로 변환
+            병합된 열은 적용하지 않음.
+        """
+        
+        # 가장 바깥쪽 테이블 태그만 가져오기
+        table = ele.find_all('table', class_='wiki-table')[0]
+
+        # Initialize variables
+        rows = table.find_all('tr')
+        parsed_data = [] # 파싱한 결과가 들어갈 2차원 배열
+        rowspans = {}  # rowspan이 있으면 병합된 행이 존재, 병합된 행의 idx와 병합된 행의 수를 체크해서 병합을 풀어주는데 사용
+
+        # row 단위로 접근하여 컬럼을 파싱
+        for row_idx, row in enumerate(rows):
+            cells = row.find_all('td')
+            parsed_row = []
+            col_idx = 0
+
+            for cell in cells:
+                # rowspan이 td 내에 있는 경우 rowspans를 이용해서 직전 행에 있는 중복 값을 새로운 행에 적용
+                while col_idx in rowspans and rowspans[col_idx] > 0:
+                    parsed_row.append(parsed_data[-1][col_idx])
+                    rowspans[col_idx] -= 1
+                    col_idx += 1
+
+                # 그 외의 경우 cell의 값을 그대로 가져옴
+                cell_value = cell.get_text(strip=True)
+
+                # 현재 td tag에 rowspan이 적용됐는지 확인하고 적용됐다면 rowspans에 추가
+                rowspan = int(cell.get('rowspan', 1))
+                if rowspan > 1:
+                    rowspans[col_idx] = rowspan - 1
+
+                parsed_row.append(cell_value)
+                col_idx += 1
+
+            # Fill in any remaining rowspan cells
+            while col_idx in rowspans and rowspans[col_idx] > 0:
+                parsed_row.append(parsed_data[-1][col_idx])
+                rowspans[col_idx] -= 1
+                col_idx += 1
+
+            parsed_data.append(parsed_row)
+            
+        # Print the parsed data
+        # for row in parsed_data:
+        #     print(row)
+        
+        return parsed_data
