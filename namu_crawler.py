@@ -4,6 +4,13 @@ import re
 import requests
 from bs4 import BeautifulSoup
 import urllib.parse
+import os
+from operator import itemgetter
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.output_parsers import JsonOutputParser
 
 class NamuCrawler():
     """나무 위키 문서 크롤러 클래스"""
@@ -14,6 +21,14 @@ class NamuCrawler():
         html_doc = self.session.get(url)
         self.soup = BeautifulSoup(html_doc.text, 'html.parser')
         self.toc_dict = {}
+
+        #파싱용 LLM 모델 셋팅
+        os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+        os.environ['LANGCHAIN_API_KEY'] = os.getenv("LANGCHAIN_API_KEY")
+
+        self.llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
+        os.environ["LANGCHAIN_TRACING_V2"] = "true"
+        os.environ["LANGCHAIN_PROJECT"] = "langchain-academy"
         
     def construct_toc(self) -> bool:
         """## 목차(TOC) 정보 추출 및 TOC 딕셔너리 구성"""
@@ -132,11 +147,14 @@ class NamuCrawler():
 
         # 헤더가 PROFILE인 경우: 첫번째 테이블만 가져오기
         if head[1] == "PROFILE":
-            content = self.strip_table(soup_between.find("table"))
+            # content = self.strip_table(soup_between.find("table"))
+            tbl_array = self.table_to_array(soup_between.find("table"))
+            content = self.tbl_array_to_json(tbl_array)
             return (head, [content])
         # PROFILE이 아닌 경우: 추출할 원소들 리스트에 부모의 태그가 td가 아닌 경우 wiki-paragraph를 가진 엘리먼트를 수집, 거기에 wiki-table까지 추가로 넣기
         elements_between = [ele for ele in soup_between.find_all('div', class_='wiki-paragraph') if ele.find_parent().name != "td"]
-        elements_between += list(soup_between.find_all('table', class_ = 'wiki-table'))
+        elements_between += self.get_outer_tables(soup_between)
+        # elements_between += list(soup_between.find_all('table', class_ = 'wiki-table'))
 
         if len(elements_between) == 0 or (len(elements_between) == 1 and elements_between[0].get_text() == ""):
             # 설명이 아예 없는 경우 아래 안내 메세지 반환
@@ -149,13 +167,17 @@ class NamuCrawler():
         # 설명이 있는 경우엔 get_text()로 텍스트 반환
         text_content = []
         for element in elements_between:
-            # 만약 펼치기/접기 버튼이 있으면 그냥 넘어가기 : 데이터가 중복임
-            if element.find("dl", class_ = 'wiki-folding') is not None:
-                continue
+
+            # 만약 펼치기/접기 버튼이 있으면 그냥 넘어가기 : 데이터가 중복임 => 안에 있는 테이블 파싱 진행 필요하여 생략
+            # if element.find("dl", class_ = 'wiki-folding') is not None:
+            #     continue
             
             # 만약 테이블 요소를 가지고 있거나 자체가 테이블 클래스라면 테이블을 strip하는 함수 적용 => 테이블 파싱 & LLM으로 복구하는 코드로 변경 예정
-            # if element.find("table", class_ = 'wiki-table') is not None or element.get('class')[0] == 'wiki-table':
+            if element.find("table", class_ = 'wiki-table') is not None or element.get('class')[0] == 'wiki-table':
             #     text_content.append(self.strip_table(element))
+
+                tbl_array = self.table_to_array(element)
+                text_content.append(self.tbl_array_to_json(tbl_array))
 
             # 만약 각주가 있는 엘리먼트라면 각주를 strip하는 함수 적용
             elif element.find("a", class_ = 'wiki-fn-content') is not None:
@@ -163,15 +185,22 @@ class NamuCrawler():
             
             # 외부 링크가 있으면 링크를 strip 하는 함수 적용 => 추가 개발 필요
             # elif element.find("a", class_ = 'wiki-link-external') is not None:
-            #     text_content.append(self.strip_ex_links(element))
-
-            
+            #     text_content.append(self.strip_ex_links(element))    
 
             else: #아니면 그냥 일반 get_text() 적용
                 text_content.append(element.get_text())
                 
         return (head, text_content)
         
+    def get_outer_tables(self, soup):
+        """가장 바깥쪽 table 태그만 파싱하는 함수"""
+        outer_tables = []
+        for table in soup.find_all("table", class_ = 'wiki-table'):
+            # 부모가 다른 table이 아닌 경우에만 추가
+            if not table.find_parent("table", class_ = 'wiki-table'):
+                outer_tables.append(table)
+        return outer_tables
+
 
     def get_next_item(self, target_key):
         """toc_dict에서 현재 헤드의 다음 헤드 값을 반환"""
@@ -196,15 +225,16 @@ class NamuCrawler():
             return (self.toc_dict.get(heading_idx)[0], [self.toc_dict.get(heading_idx)[1].get_text()])
         return self.get_content_between_tags(head = self.toc_dict.get(heading_idx)[0], start_tag= start_tag, end_tag= end_tag)
     
-    def table_to_array (self, ele) -> str:
+    def table_to_array (self, ele):
         """
             HTML Table을 2차원 배열로 치환 -> LLM으로 JSON 변환하는 함수
             병합된 행이 있으면 행을 먼저 분할하고 각 행에 넣어준 뒤에 2차원 배열로 변환
             병합된 열은 적용하지 않음.
         """
-        
+        table = ele
+
         # 가장 바깥쪽 테이블 태그만 가져오기
-        table = ele.find_all('table', class_='wiki-table')[0]
+        # table = ele.find_all('table', class_='wiki-table')[0]
 
         # Initialize variables
         rows = table.find_all('tr')
@@ -248,3 +278,44 @@ class NamuCrawler():
         #     print(row)
         
         return parsed_data
+
+    def tbl_array_to_json(self, arr) -> str:
+        """
+            LLM을 이용해서 2차원 배열을 JSON 형태로 변환하는 함수
+        """
+
+        append_row = []
+        for row in arr:
+            append_row.append(",".join(col for col in row))
+        str_table = "\n\n ".join(row for row in append_row)
+
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                # role, message
+                ("system", """You are an expert in data parsing and JSON conversion. Your task is to analyze and transform structured text data into properly formatted JSON objects. The data may have the following characteristics:
+
+                        1. Some rows may be entirely empty. Ignore these rows and do not include them in the final output.
+                        2. If a row has a different number of columns than the previous rows, it indicates merged cells or inconsistent formatting. Interpret these cases carefully to maintain data consistency.
+                        3. Records may be structured either by rows or by columns. You need to analyze the entire dataset to determine whether the primary record structure should be row-based or column-based before generating the JSON.
+                        4. Strings in the form of [\d+] are footnotes, so they do not need to be included in the output.
+
+                        Your job is to accurately identify and handle these variations to create a clean, valid JSON output that reflects the data structure.
+                        Output only the final JSON representation, without any additional explanations or text.
+                        If the output format is a code block, please output it in JSON format with the code block removed.
+                        """),
+                ("human", """"I have a structured string representing tabular data where each row is separated by '\n\n' and columns by commas. 
+                Here is the structured string:
+                <string>{table}</string>
+                Parse the input, then generate JSON where each subsequent row corresponds to a JSON object with the respective header keys.
+        """)
+            ]
+        )
+
+        # 수정된 체인 생성 코드
+        chain = {
+                'table': itemgetter('table') | RunnablePassthrough()
+        } | prompt | self.llm | StrOutputParser()
+
+        result = chain.invoke({"table":str_table}) 
+
+        return result
