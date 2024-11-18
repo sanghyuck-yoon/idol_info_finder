@@ -175,8 +175,8 @@ class NamuCrawler():
             # 만약 테이블 요소를 가지고 있거나 자체가 테이블 클래스라면 테이블을 strip하는 함수 적용 => 테이블 파싱 & LLM으로 복구하는 코드로 변경 예정
             if element.find("table", class_ = 'wiki-table') is not None or element.get('class')[0] == 'wiki-table':
             #     text_content.append(self.strip_table(element))
-
-                tbl_array = self.table_to_array(element)
+                transformed_tbl = self.transform_nested_table(element)
+                tbl_array = self.table_to_array(transformed_tbl)
                 text_content.append(self.tbl_array_to_json(tbl_array))
 
             # 만약 각주가 있는 엘리먼트라면 각주를 strip하는 함수 적용
@@ -225,19 +225,51 @@ class NamuCrawler():
             return (self.toc_dict.get(heading_idx)[0], [self.toc_dict.get(heading_idx)[1].get_text()])
         return self.get_content_between_tags(head = self.toc_dict.get(heading_idx)[0], start_tag= start_tag, end_tag= end_tag)
     
-    def table_to_array (self, ele):
+    def transform_nested_table (self, tbl):
+        """
+            <table> 하위에 <dl>로 숨겨진 테이블을 중첩한 경우
+            <dl> 하위의 테이블을 파싱한 뒤, 중첩된 테이블을 삭제
+            파싱한 하위 테이블은 <dl>이 속한 <tr> 바로 뒤에 삽입하여 부모 테이블의 구조로 병합
+        """
+        
+        # <dl> 내부에 중첩된 <table>을 처리
+        for dl in tbl.find_all("dl"):
+            nested_table = dl.find("table")  # <dl> 내부의 <table> 찾기
+            if nested_table:
+                # 중첩된 <table>의 <tr> 태그를 추출
+                nested_rows = nested_table.find_all("tr")
+                parent_tbdy = dl.find_parent("tbody")  # 중첩 <tr>의 부모 <tbody> 찾기
+                parent_tr = dl.find_parent('tr') # <dl>의 부모 <tr> 찾기
+                
+                # 병합된 컬럼인 dl.dt는 신규 tr.dt로 생성 후 append 시키기
+                new_tr = BeautifulSoup().new_tag('tr')
+                new_td = BeautifulSoup().new_tag('td')
+                new_td.string = dl.dt.text
+                new_tr.append(new_td)
+                parent_tbdy.append(new_tr)
+
+                # 파싱한 <tr> 태그를 부모 <tbody>에 추가
+                for tr in nested_rows:
+                    parent_tbdy.append(tr)
+
+                # 중첩된 <table>를 포함한 tr 태그를 제거
+                parent_tr.decompose()
+
+        # 병합한 tbl 반환
+        return tbl
+
+    def table_to_array (self, tbl):
         """
             HTML Table을 2차원 배열로 치환 -> LLM으로 JSON 변환하는 함수
             병합된 행이 있으면 행을 먼저 분할하고 각 행에 넣어준 뒤에 2차원 배열로 변환
             병합된 열은 적용하지 않음.
         """
-        table = ele
 
         # 가장 바깥쪽 테이블 태그만 가져오기
         # table = ele.find_all('table', class_='wiki-table')[0]
 
         # Initialize variables
-        rows = table.find_all('tr')
+        rows = tbl.find_all('tr')
         parsed_data = [] # 파싱한 결과가 들어갈 2차원 배열
         rowspans = {}  # rowspan이 있으면 병합된 행이 존재, 병합된 행의 idx와 병합된 행의 수를 체크해서 병합을 풀어주는데 사용
 
