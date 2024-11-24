@@ -86,16 +86,23 @@ class NamuCrawler():
 
     def get_ancestor_items(self, toc_index, level = None):
         """하나의 목차 item에 대한 상위 목차들을 모두 찾아 반환(현재 페이지 한정))"""
+        
+        #문서 인덱스가 아무 이유없이 맨 뒤에 .만 있는 경우
         toc_index = toc_index[:-1] if toc_index [-1] == "." else toc_index
+
         if level is None:
             level = len(toc_index.split(".")) - 1
             
         cur_toc_index = toc_index
         ancestors = []
         for i in range(level):
-            ancestors.insert(
-                0, self.toc_dict.get(f"s-{'.'.join(cur_toc_index.split(sep = '.')[:-1])}")[0]
-            )
+            try:
+                ancestors.insert(
+                    0, self.toc_dict.get(f"s-{'.'.join(cur_toc_index.split(sep = '.')[:-1])}")[0]
+                )
+            except:
+                return self.toc_dict.get(f"s-{'.'.join(cur_toc_index.split(sep = '.'))}")[0][1] #문서 인덱스에 오류가 발생하면 일딴 현재 위치를 메타 데이터로 반환
+            
             cur_toc_index = ancestors[-1][0][:-1]  
         toc_items = "/".join([i[1] for i in ancestors])
         return toc_items
@@ -136,6 +143,8 @@ class NamuCrawler():
         """두개의 태그 사이의 wiki-paragraph 정보 추출"""
         html_str = str(self.soup)
 
+        # print(head[1]) #작업 위치 프린트
+
         # 시작 태그와 끝 태그의 위치를 찾아 사이의 컨텐츠를 추출, 임시 soup로 만듦
         start_pos = html_str.find(str(start_tag))
         if head[1] == "PROFILE": ## 프로필 이라면 목차 전까지
@@ -148,7 +157,17 @@ class NamuCrawler():
         # 헤더가 PROFILE인 경우: 첫번째 테이블만 가져오기
         if head[1] == "PROFILE":
             # content = self.strip_table(soup_between.find("table"))
-            tbl_array = self.table_to_array(soup_between.find("table"))
+            tbl_origin = soup_between.find("table")
+            
+            # PROFILE에서는 <dl>로 감춰둔 내용은 필요 없으므로 미리 제거
+            dl_tags = tbl_origin.find_all('dl')
+
+            # <dl> 태그와 포함된 내용을 제거
+            for dl_tag in dl_tags:
+                dl_tag.decompose()  # 태그 삭제
+
+            transformed_tbl = self.transform_nested_table(tbl_origin)
+            tbl_array = self.table_to_array(transformed_tbl)
             content = self.tbl_array_to_json(tbl_array)
             return (head, [content])
         # PROFILE이 아닌 경우: 추출할 원소들 리스트에 부모의 태그가 td가 아닌 경우 wiki-paragraph를 가진 엘리먼트를 수집, 거기에 wiki-table까지 추가로 넣기
@@ -172,9 +191,9 @@ class NamuCrawler():
             # if element.find("dl", class_ = 'wiki-folding') is not None:
             #     continue
             
-            # 만약 테이블 요소를 가지고 있거나 자체가 테이블 클래스라면 테이블을 strip하는 함수 적용 => 테이블 파싱 & LLM으로 복구하는 코드로 변경 예정
+            # 만약 테이블 요소를 가지고 있거나 자체가 테이블 클래스라면 테이블을 파싱 & LLM으로 복구하는 코드로 변경 예정
             if element.find("table", class_ = 'wiki-table') is not None or element.get('class')[0] == 'wiki-table':
-            #     text_content.append(self.strip_table(element))
+                #     text_content.append(self.strip_table(element))
                 transformed_tbl = self.transform_nested_table(element)
                 tbl_array = self.table_to_array(transformed_tbl)
                 text_content.append(self.tbl_array_to_json(tbl_array))
@@ -230,15 +249,20 @@ class NamuCrawler():
             <table> 하위에 <dl>로 숨겨진 테이블을 중첩한 경우
             <dl> 하위의 테이블을 파싱한 뒤, 중첩된 테이블을 삭제
             파싱한 하위 테이블은 <dl>이 속한 <tr> 바로 뒤에 삽입하여 부모 테이블의 구조로 병합
+            적용 가능한 범위는 2 depth 중첩인 경우만, 그 이상 중첩은 처리할 수 없음
         """
+    
+        tbl_simple = self.simplify_table(tbl)
         
         # <dl> 내부에 중첩된 <table>을 처리
-        for dl in tbl.find_all("dl"):
+        for dl in tbl_simple.find_all("dl"):
             nested_table = dl.find("table")  # <dl> 내부의 <table> 찾기
             if nested_table:
                 # 중첩된 <table>의 <tr> 태그를 추출
                 nested_rows = nested_table.find_all("tr")
-                parent_tbdy = dl.find_parent("tbody")  # 중첩 <tr>의 부모 <tbody> 찾기
+                parent_tbdy = dl.find_parent("tbody")  # <dl>의 부모 <tbody> 찾기
+                if parent_tbdy is None: # <dl>의 부모가 없으면 <table> 중첩 아니므로 생략
+                    continue
                 parent_tr = dl.find_parent('tr') # <dl>의 부모 <tr> 찾기
                 
                 # 병합된 컬럼인 dl.dt는 신규 tr.dt로 생성 후 append 시키기
@@ -256,7 +280,7 @@ class NamuCrawler():
                 parent_tr.decompose()
 
         # 병합한 tbl 반환
-        return tbl
+        return tbl_simple
 
     def table_to_array (self, tbl):
         """
@@ -310,6 +334,36 @@ class NamuCrawler():
         #     print(row)
         
         return parsed_data
+
+    def simplify_table(self, tbl):
+        """ 
+            테이블 디자인을 위한 불필요한 div 태그 제거
+        """
+        for div in tbl.find_all('div'):
+            # 디자인 목적의 div만 제거 (단, 필요 시 보존)
+            if div.get('style') and not div.get('class'):
+                div.unwrap()
+
+        # 중첩된 span 태그도 제거
+        for span in tbl.find_all('span'):
+            span.unwrap()
+        
+        # 중첩된 img 태그도 제거
+        for span in tbl.find_all('img'):
+            span.unwrap()
+            
+        # 제거하고자 하는 텍스트
+        stopwords = ["행정구","속령"]
+
+        # 특정 텍스트가 포함된 모든 태그 찾기
+        for word in stopwords:
+            tags_to_remove = tbl.find_all(string=lambda text: word in text)
+
+            # 찾은 태그들 제거
+            for tag in tags_to_remove:
+                tag.parent.decompose()
+        
+        return tbl
 
     def tbl_array_to_json(self, arr) -> str:
         """
