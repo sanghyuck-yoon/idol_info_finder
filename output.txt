@@ -1,0 +1,307 @@
+!!! START PROTOTYPE TEST !!!
+
+
+[Actual Member Grid (Complex)]
+------------------------------
+Cleaned HTML Output:
+<table>
+ <tbody>
+  <tr>
+   <td colspan="4">
+    (icon: BLACKPINK 로고)
+   </td>
+  </tr>
+  <tr>
+   <td>
+    (icon: 뛰어(JUMP) 지수 프로필)
+   </td>
+   <td>
+    (icon: 뛰어(JUMP) 제니 프로필)
+   </td>
+   <td>
+    (icon: 뛰어(JUMP) 로제 프로필)
+   </td>
+   <td>
+    (icon: 뛰어(JUMP) 리사 프로필)
+   </td>
+  </tr>
+  <tr>
+   <td>
+    지수
+   </td>
+   <td>
+    제니
+   </td>
+   <td>
+    로제
+   </td>
+   <td>
+    리사
+   </td>
+  </tr>
+  <tr>
+   <td rowspan="1">
+    1995. 01. 03. (31세)
+    |
+    (icon: 대한민국 국기)
+    |
+    리드보컬
+   </td>
+   <td rowspan="1">
+    1996. 01. 16. (29세)
+    |
+    (icon: 대한민국 국기)
+    |
+    메인래퍼
+    리드보컬
+   </td>
+   <td rowspan="1">
+    1997. 02. 11. (28세)
+    |
+    (icon: 대한민국 국기)
+    |
+    (icon: 뉴질랜드 국기)
+    |
+    메인보컬
+    리드댄서
+   </td>
+   <td rowspan="1">
+    1997. 03. 27. (28세)
+    |
+    (icon: 태국 국기)
+    |
+    메인댄서
+    리드래퍼
+    서브보컬
+   </td>
+  </tr>
+ </tbody>
+</table>
+
+Generated Prompt Preview:
+</table>...
+
+[Actual Infobox (Key-Value)]
+------------------------------
+Cleaned HTML Output:
+<table>
+ <tbody>
+  <tr>
+   <td colspan="3">
+    <table>
+     <tbody>
+      <tr>
+       <td>
+        (icon: BLACKPINK 로고)
+       </td>
+       <td>
+        BLACKPINK
+        블랙핑크 · ブラックピンク
+       </td>
+      </tr>
+     </tbody>
+    </table>
+   </td>
+  </tr>
+  <tr>
+   <td rowspan="3">
+    데뷔일
+   </td>
+   <td>
+    (icon: 대한민국 국기)
+   </td>
+   <td>
+    2016년
+    8월 8일
+    (데뷔일로부터
+    +3435일
+    ,
+    9주년
+    )
+   </td>
+  </tr>
+  <tr>
+   <td>
+    (icon: 일본 국기)
+   </td>
+   <td>
+    2017년
+    8월 30일
+    (데뷔일로부터
+    +3048일
+    ,
+    8주년
+    )
+   </td>
+  </tr>
+  <tr>
+   <td>
+    (icon: 미국 국기)
+   </td>
+   <td>
+    2019년
+    2월 9일
+    (데뷔일로부터
+    +2520일
+    ,
+    6주년
+    )
+   </td>
+  </tr>
+  <tr>
+   <td>
+    데뷔 음반
+   </td>
+   <td colspan="2">
+    디지털 싱글
+    SQUARE ONE
+   </td>
+  </tr>
+  <tr>
+   <td>
+    장르
+   </td>
+   <td colspan="2">
+    댄스
+    ,
+    랩
+    /
+    힙합
+    ,
+    POP
+    ,
+    R&amp;B
+    /
+    Soul
+    ,
+    록
+    /
+    메탈
+    ,
+    포크
+    /
+    블루스
+    ,
+    EDM
+    /
+    뭄바톤
+   </td>
+  </tr>
+  <tr>
+   <td>
+    소속사
+   </td>
+   <td colspan="2">
+    YG엔터테인먼트
+   </td>
+  </tr>
+  <tr>
+   <td rowspan="3">
+    레이블
+   </td>
+   <td>
+    (icon: 미국 국기)
+   </td>
+   <td>
+    인터스코프 레코드
+   </td>
+  </tr>
+  <tr>
+   <td>
+    (icon: 영국 국기)
+   </td>
+   <td>
+    폴리도르 레코드
+   </td>
+  </tr>
+  <tr>
+   <td>
+    (icon: 일본 국기)
+   </td>
+   <td>
+    YGEX
+   </td>
+  </tr>
+  <tr>
+   <td rowspan="5">
+    유통사
+   </td>
+   <td>
+    (icon: 대한민국 국기)
+   </td>
+   <td>
+    YG PLUS
+   </td>
+  </tr>
+  <tr>
+   <td>
+    (icon: 미국 국기)
+   </td>
+   <td>
+    유니버설 뮤직 그룹
+   </td>
+  </tr>
+  <tr>
+   <td>
+    (icon: 영국 국기)
+   </td>
+   <td>
+    유니버설 뮤직 UK
+   </td>
+  </tr>
+  <tr>
+   <td>
+    (icon: 일본 국기)
+   </td>
+   <td>
+    유니버설 뮤직 재팬
+   </td>
+  </tr>
+  <tr>
+   <td>
+    (icon: 중국 국기)
+   </td>
+   <td>
+    텐센트 뮤직 엔터테인먼트
+   </td>
+  </tr>
+  <tr>
+   <td>
+    팬덤
+   </td>
+   <td colspan="2">
+    BLINK(블링크)
+   </td>
+  </tr>
+  <tr>
+   <td>
+    응원봉
+   </td>
+   <td colspan="2">
+    뿅봉
+   </td>
+  </tr>
+  <tr>
+   <td>
+    훈장
+   </td>
+   <td colspan="2">
+    대영제국 훈장
+    5등급
+    [1]
+   </td>
+  </tr>
+  <tr>
+   <td>
+    링크
+   </td>
+   <td colspan="2">
+   </td>
+  </tr>
+ </tbody>
+</table>
+
+Generated Prompt Preview:
+</table>...
+
+!!! END PROTOTYPE TEST !!!
