@@ -174,7 +174,7 @@ To Do
 
 # Authors
 # =======
-# 
+#
 # - John D Hunter: original author.
 # - Fernando Perez: refactoring, documentation, cleanups, port to 0.11.
 # - VáclavŠmilauer <eudoxos-AT-arcig.cz>: Prompt generalizations.
@@ -196,6 +196,7 @@ import ast
 import warnings
 import shutil
 from io import StringIO
+from typing import Any, Dict, Set
 
 # Third-party
 from docutils.parsers.rst import directives
@@ -336,7 +337,7 @@ def block_parser(part, rgxin, rgxout, fmtin, fmtout):
     return block
 
 
-class EmbeddedSphinxShell(object):
+class EmbeddedSphinxShell:
     """An embedded IPython instance to run inside Sphinx"""
 
     def __init__(self, exec_lines=None):
@@ -351,7 +352,7 @@ class EmbeddedSphinxShell(object):
         config.HistoryManager.hist_file = ':memory:'
         config.InteractiveShell.autocall = False
         config.InteractiveShell.autoindent = False
-        config.InteractiveShell.colors = 'NoColor'
+        config.InteractiveShell.colors = "nocolor"
 
         # create a profile so instance history isn't saved
         tmp_profile_dir = tempfile.mkdtemp(prefix='profile_')
@@ -425,7 +426,7 @@ class EmbeddedSphinxShell(object):
         source_dir = self.source_dir
         saveargs = decorator.split(' ')
         filename = saveargs[1]
-        # insert relative path to image file in source 
+        # insert relative path to image file in source
         # as absolute path for Sphinx
         # sphinx expects a posix path, even on Windows
         path = pathlib.Path(savefig_dir, filename)
@@ -901,21 +902,22 @@ class EmbeddedSphinxShell(object):
 
 class IPythonDirective(Directive):
 
-    has_content = True
-    required_arguments = 0
-    optional_arguments = 4 # python, suppress, verbatim, doctest
-    final_argumuent_whitespace = True
-    option_spec = { 'python': directives.unchanged,
-                    'suppress' : directives.flag,
-                    'verbatim' : directives.flag,
-                    'doctest' : directives.flag,
-                    'okexcept': directives.flag,
-                    'okwarning': directives.flag
-                  }
+    has_content: bool = True
+    required_arguments: int = 0
+    optional_arguments: int = 4  # python, suppress, verbatim, doctest
+    final_argumuent_whitespace: bool = True
+    option_spec: Dict[str, Any] = {
+        "python": directives.unchanged,
+        "suppress": directives.flag,
+        "verbatim": directives.flag,
+        "doctest": directives.flag,
+        "okexcept": directives.flag,
+        "okwarning": directives.flag,
+    }
 
     shell = None
 
-    seen_docs = set()
+    seen_docs: Set = set()
 
     def get_config_options(self):
         # contains sphinx configuration variables
@@ -969,7 +971,7 @@ class IPythonDirective(Directive):
         # reset the execution count if we haven't processed this doc
         #NOTE: this may be borked if there are multiple seen_doc tmp files
         #check time stamp?
-        if not self.state.document.current_source in self.seen_docs:
+        if self.state.document.current_source not in self.seen_docs:
             self.shell.IP.history_manager.reset()
             self.shell.IP.execution_count = 1
             self.seen_docs.add(self.state.document.current_source)

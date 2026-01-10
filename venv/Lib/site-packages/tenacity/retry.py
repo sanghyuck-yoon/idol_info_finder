@@ -30,10 +30,16 @@ class retry_base(abc.ABC):
         pass
 
     def __and__(self, other: "retry_base") -> "retry_all":
-        return retry_all(self, other)
+        return other.__rand__(self)
+
+    def __rand__(self, other: "retry_base") -> "retry_all":
+        return retry_all(other, self)
 
     def __or__(self, other: "retry_base") -> "retry_any":
-        return retry_any(self, other)
+        return other.__ror__(self)
+
+    def __ror__(self, other: "retry_base") -> "retry_any":
+        return retry_any(other, self)
 
 
 RetryBaseT = typing.Union[retry_base, typing.Callable[["RetryCallState"], bool]]
@@ -201,7 +207,7 @@ class retry_if_exception_message(retry_if_exception):
     def __init__(
         self,
         message: typing.Optional[str] = None,
-        match: typing.Optional[str] = None,
+        match: typing.Union[None, str, typing.Pattern[str]] = None,
     ) -> None:
         if message and match:
             raise TypeError(
@@ -236,7 +242,7 @@ class retry_if_not_exception_message(retry_if_exception_message):
     def __init__(
         self,
         message: typing.Optional[str] = None,
-        match: typing.Optional[str] = None,
+        match: typing.Union[None, str, typing.Pattern[str]] = None,
     ) -> None:
         super().__init__(message, match)
         # invert predicate

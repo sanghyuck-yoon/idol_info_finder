@@ -230,7 +230,7 @@ class DocAIParser(BaseBlobParser):
             time_elapsed += check_in_interval_sec
             if time_elapsed > timeout_sec:
                 raise TimeoutError(
-                    "Timeout exceeded! Check operations " f"{operation_names} later!"
+                    f"Timeout exceeded! Check operations {operation_names} later!"
                 )
             logger.debug(".")
 
@@ -267,7 +267,7 @@ class DocAIParser(BaseBlobParser):
         """Initializes Long-Running Operations from their names."""
         try:
             from google.longrunning.operations_pb2 import (
-                GetOperationRequest,  # type: ignore
+                GetOperationRequest,
             )
         except ImportError as exc:
             raise ImportError(

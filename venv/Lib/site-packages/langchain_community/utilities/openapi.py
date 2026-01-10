@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 try:
     from openapi_pydantic import OpenAPI
 except ImportError:
-    OpenAPI = object  # type: ignore
+    OpenAPI = object
 
 
 class OpenAPISpec(OpenAPI):
@@ -211,8 +211,7 @@ class OpenAPISpec(OpenAPI):
             )
         else:
             raise ValueError(
-                "Attempting to load an unsupported spec:"
-                f"\n\n{obj}\n{warning_message}"
+                f"Attempting to load an unsupported spec:\n\n{obj}\n{warning_message}"
             )
 
     @classmethod

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Top-level display functions for displaying object in different formats."""
 
 # Copyright (c) IPython Development Team.
@@ -16,39 +15,39 @@ from copy import deepcopy
 from os.path import splitext
 from pathlib import Path, PurePath
 
-from IPython.utils.py3compat import cast_unicode
+from typing import Optional
+
 from IPython.testing.skipdoctest import skip_doctest
 from . import display_functions
 
 
-__all__ = ['display_pretty', 'display_html', 'display_markdown',
-           'display_svg', 'display_png', 'display_jpeg', 'display_latex', 'display_json',
-           'display_javascript', 'display_pdf', 'DisplayObject', 'TextDisplayObject',
-           'Pretty', 'HTML', 'Markdown', 'Math', 'Latex', 'SVG', 'ProgressBar', 'JSON',
-           'GeoJSON', 'Javascript', 'Image', 'set_matplotlib_formats',
-           'set_matplotlib_close',
-           'Video']
-
-_deprecated_names = ["display", "clear_output", "publish_display_data", "update_display", "DisplayHandle"]
-
-__all__ = __all__ + _deprecated_names
-
-
-# ----- warn to import from IPython.display -----
-
-from warnings import warn
-
-
-def __getattr__(name):
-    if name in _deprecated_names:
-        warn(f"Importing {name} from IPython.core.display is deprecated since IPython 7.14, please import from IPython display", DeprecationWarning, stacklevel=2)
-        return getattr(display_functions, name)
-
-    if name in globals().keys():
-        return globals()[name]
-    else:
-        raise AttributeError(f"module {__name__} has no attribute {name}")
-
+__all__ = [
+    "display_pretty",
+    "display_html",
+    "display_markdown",
+    "display_svg",
+    "display_png",
+    "display_jpeg",
+    "display_webp",
+    "display_latex",
+    "display_json",
+    "display_javascript",
+    "display_pdf",
+    "DisplayObject",
+    "TextDisplayObject",
+    "Pretty",
+    "HTML",
+    "Markdown",
+    "Math",
+    "Latex",
+    "SVG",
+    "ProgressBar",
+    "JSON",
+    "GeoJSON",
+    "Javascript",
+    "Image",
+    "Video",
+]
 
 #-----------------------------------------------------------------------------
 # utility functions
@@ -196,6 +195,23 @@ def display_jpeg(*objs, **kwargs):
     _display_mimetype('image/jpeg', objs, **kwargs)
 
 
+def display_webp(*objs, **kwargs):
+    """Display the WEBP representation of an object.
+
+    Parameters
+    ----------
+    *objs : object
+        The Python objects to display, or if raw=True raw JPEG data to
+        display.
+    raw : bool
+        Are the data objects raw data or Python objects that need to be
+        formatted before display? [default: False]
+    metadata : dict (optional)
+        Metadata to be associated with the specific mimetype output.
+    """
+    _display_mimetype("image/webp", objs, **kwargs)
+
+
 def display_latex(*objs, **kwargs):
     """Display the LaTeX representation of an object.
 
@@ -271,7 +287,7 @@ def display_pdf(*objs, **kwargs):
 #-----------------------------------------------------------------------------
 
 
-class DisplayObject(object):
+class DisplayObject:
     """An object that wraps data to be displayed."""
 
     _read_flags = 'r'
@@ -475,7 +491,7 @@ class SVG(DisplayObject):
     _read_flags = 'rb'
     # wrap data in a property, which extracts the <svg> tag, discarding
     # document headers
-    _data = None
+    _data: Optional[str] = None
 
     @property
     def data(self):
@@ -497,8 +513,10 @@ class SVG(DisplayObject):
             # fallback on the input, trust the user
             # but this is probably an error.
             pass
-        svg = cast_unicode(svg)
-        self._data = svg
+        if isinstance(svg, bytes):
+            self._data = svg.decode(errors="replace")
+        else:
+            self._data = svg
 
     def _repr_svg_(self):
         return self._data_and_metadata()
@@ -772,15 +790,21 @@ class Javascript(TextDisplayObject):
         r += _lib_t2*len(self.lib)
         return r
 
-# constants for identifying png/jpeg data
-_PNG = b'\x89PNG\r\n\x1a\n'
-_JPEG = b'\xff\xd8'
+
+# constants for identifying png/jpeg/gif/webp data
+_PNG = b"\x89PNG\r\n\x1a\n"
+_JPEG = b"\xff\xd8"
+_GIF1 = b"GIF87a"
+_GIF2 = b"GIF89a"
+_WEBP = b"WEBP"
+
 
 def _pngxy(data):
     """read the (width, height) from a PNG header"""
     ihdr = data.index(b'IHDR')
     # next 8 bytes are width/height
     return struct.unpack('>ii', data[ihdr+4:ihdr+12])
+
 
 def _jpegxy(data):
     """read the (width, height) from a JPEG header"""
@@ -801,22 +825,45 @@ def _jpegxy(data):
     h, w = struct.unpack('>HH', data[iSOF+5:iSOF+9])
     return w, h
 
+
 def _gifxy(data):
     """read the (width, height) from a GIF header"""
     return struct.unpack('<HH', data[6:10])
 
 
+def _webpxy(data):
+    """read the (width, height) from a WEBP header"""
+    if data[12:16] == b"VP8 ":
+        width, height = struct.unpack("<HH", data[24:30])
+        width = width & 0x3FFF
+        height = height & 0x3FFF
+        return (width, height)
+    elif data[12:16] == b"VP8L":
+        size_info = struct.unpack("<I", data[21:25])[0]
+        width = 1 + ((size_info & 0x3F) << 8) | (size_info >> 24)
+        height = 1 + (
+            (((size_info >> 8) & 0xF) << 10)
+            | (((size_info >> 14) & 0x3FC) << 2)
+            | ((size_info >> 22) & 0x3)
+        )
+        return (width, height)
+    else:
+        raise ValueError("Not a valid WEBP header")
+
+
 class Image(DisplayObject):
 
-    _read_flags = 'rb'
-    _FMT_JPEG = u'jpeg'
-    _FMT_PNG = u'png'
-    _FMT_GIF = u'gif'
-    _ACCEPTABLE_EMBEDDINGS = [_FMT_JPEG, _FMT_PNG, _FMT_GIF]
+    _read_flags = "rb"
+    _FMT_JPEG = "jpeg"
+    _FMT_PNG = "png"
+    _FMT_GIF = "gif"
+    _FMT_WEBP = "webp"
+    _ACCEPTABLE_EMBEDDINGS = [_FMT_JPEG, _FMT_PNG, _FMT_GIF, _FMT_WEBP]
     _MIMETYPES = {
-        _FMT_PNG: 'image/png',
-        _FMT_JPEG: 'image/jpeg',
-        _FMT_GIF: 'image/gif',
+        _FMT_PNG: "image/png",
+        _FMT_JPEG: "image/jpeg",
+        _FMT_GIF: "image/gif",
+        _FMT_WEBP: "image/webp",
     }
 
     def __init__(
@@ -833,7 +880,7 @@ class Image(DisplayObject):
         metadata=None,
         alt=None,
     ):
-        """Create a PNG/JPEG/GIF image object given raw data.
+        """Create a PNG/JPEG/GIF/WEBP image object given raw data.
 
         When this object is returned by an input cell or passed to the
         display function, it will result in the image being displayed
@@ -854,7 +901,7 @@ class Image(DisplayObject):
             Images from a file are always embedded.
 
         format : unicode
-            The format of the image data (png/jpeg/jpg/gif). If a filename or URL is given
+            The format of the image data (png/jpeg/jpg/gif/webp). If a filename or URL is given
             for format will be inferred from the filename extension.
 
         embed : bool
@@ -938,6 +985,8 @@ class Image(DisplayObject):
                     format = self._FMT_PNG
                 elif ext == u'gif':
                     format = self._FMT_GIF
+                elif ext == "webp":
+                    format = self._FMT_WEBP
                 else:
                     format = ext.lower()
             elif isinstance(data, bytes):
@@ -945,6 +994,12 @@ class Image(DisplayObject):
                 # only if format has not been specified.
                 if data[:2] == _JPEG:
                     format = self._FMT_JPEG
+                elif data[:8] == _PNG:
+                    format = self._FMT_PNG
+                elif data[8:12] == _WEBP:
+                    format = self._FMT_WEBP
+                elif data[:6] == _GIF1 or data[:6] == _GIF2:
+                    format = self._FMT_GIF
 
         # failed to detect format, default png
         if format is None:
@@ -1209,82 +1264,3 @@ class Video(DisplayObject):
     def reload(self):
         # TODO
         pass
-
-
-@skip_doctest
-def set_matplotlib_formats(*formats, **kwargs):
-    """
-    .. deprecated:: 7.23
-
-       use `matplotlib_inline.backend_inline.set_matplotlib_formats()`
-
-    Select figure formats for the inline backend. Optionally pass quality for JPEG.
-
-    For example, this enables PNG and JPEG output with a JPEG quality of 90%::
-
-        In [1]: set_matplotlib_formats('png', 'jpeg', quality=90)
-
-    To set this in your config files use the following::
-
-        c.InlineBackend.figure_formats = {'png', 'jpeg'}
-        c.InlineBackend.print_figure_kwargs.update({'quality' : 90})
-
-    Parameters
-    ----------
-    *formats : strs
-        One or more figure formats to enable: 'png', 'retina', 'jpeg', 'svg', 'pdf'.
-    **kwargs
-        Keyword args will be relayed to ``figure.canvas.print_figure``.
-    """
-    warnings.warn(
-        "`set_matplotlib_formats` is deprecated since IPython 7.23, directly "
-        "use `matplotlib_inline.backend_inline.set_matplotlib_formats()`",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    from matplotlib_inline.backend_inline import (
-        set_matplotlib_formats as set_matplotlib_formats_orig,
-    )
-
-    set_matplotlib_formats_orig(*formats, **kwargs)
-
-@skip_doctest
-def set_matplotlib_close(close=True):
-    """
-    .. deprecated:: 7.23
-
-        use `matplotlib_inline.backend_inline.set_matplotlib_close()`
-
-    Set whether the inline backend closes all figures automatically or not.
-
-    By default, the inline backend used in the IPython Notebook will close all
-    matplotlib figures automatically after each cell is run. This means that
-    plots in different cells won't interfere. Sometimes, you may want to make
-    a plot in one cell and then refine it in later cells. This can be accomplished
-    by::
-
-        In [1]: set_matplotlib_close(False)
-
-    To set this in your config files use the following::
-
-        c.InlineBackend.close_figures = False
-
-    Parameters
-    ----------
-    close : bool
-        Should all matplotlib figures be automatically closed after each cell is
-        run?
-    """
-    warnings.warn(
-        "`set_matplotlib_close` is deprecated since IPython 7.23, directly "
-        "use `matplotlib_inline.backend_inline.set_matplotlib_close()`",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    from matplotlib_inline.backend_inline import (
-        set_matplotlib_close as set_matplotlib_close_orig,
-    )
-
-    set_matplotlib_close_orig(close)

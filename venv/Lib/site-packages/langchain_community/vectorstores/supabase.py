@@ -226,6 +226,22 @@ class SupabaseVectorStore(VectorStore):
         postgrest_filter: Optional[str] = None,
         score_threshold: Optional[float] = None,
     ) -> List[Tuple[Document, float]]:
+        # Convert MongoDB-style filter to PostgreSQL syntax if needed
+        if filter:
+            for key, value in filter.items():
+                if isinstance(value, dict) and "$in" in value:
+                    # Extract the list of values for the $in operator
+                    in_values = value["$in"]
+                    # Create a PostgreSQL IN clause
+                    values_str = ",".join(f"'{str(v)}'" for v in in_values)
+                    new_filter = f"metadata->>{key} IN ({values_str})"
+
+                    # Combine with existing postgrest_filter if present
+                    if postgrest_filter:
+                        postgrest_filter = f"({postgrest_filter}) and ({new_filter})"
+                    else:
+                        postgrest_filter = new_filter
+
         match_documents_params = self.match_args(query, filter)
         query_builder = self._client.rpc(self.query_name, match_documents_params)
 
@@ -241,7 +257,7 @@ class SupabaseVectorStore(VectorStore):
         match_result = [
             (
                 Document(
-                    metadata=search.get("metadata", {}),  # type: ignore
+                    metadata=search.get("metadata", {}),
                     page_content=search.get("content", ""),
                 ),
                 search.get("similarity", 0.0),
@@ -270,7 +286,7 @@ class SupabaseVectorStore(VectorStore):
         k: int,
         filter: Optional[Dict[str, Any]] = None,
         postgrest_filter: Optional[str] = None,
-    ) -> List[Tuple[Document, float, np.ndarray[np.float32, Any]]]:
+    ) -> List[Tuple[Document, float, np.ndarray]]:
         match_documents_params = self.match_args(query, filter)
         query_builder = self._client.rpc(self.query_name, match_documents_params)
 
@@ -286,7 +302,7 @@ class SupabaseVectorStore(VectorStore):
         match_result = [
             (
                 Document(
-                    metadata=search.get("metadata", {}),  # type: ignore
+                    metadata=search.get("metadata", {}),
                     page_content=search.get("content", ""),
                 ),
                 search.get("similarity", 0.0),
@@ -335,7 +351,7 @@ class SupabaseVectorStore(VectorStore):
                 "id": ids[idx],
                 "content": documents[idx].page_content,
                 "embedding": embedding,
-                "metadata": documents[idx].metadata,  # type: ignore
+                "metadata": documents[idx].metadata,
                 **kwargs,
             }
             for idx, embedding in enumerate(vectors)
@@ -344,7 +360,7 @@ class SupabaseVectorStore(VectorStore):
         for i in range(0, len(rows), chunk_size):
             chunk = rows[i : i + chunk_size]
 
-            result = client.from_(table_name).upsert(chunk).execute()  # type: ignore
+            result = client.from_(table_name).upsert(chunk).execute()
 
             if len(result.data) == 0:
                 raise Exception("Error inserting: No rows added")

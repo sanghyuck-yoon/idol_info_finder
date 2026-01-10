@@ -153,7 +153,9 @@ def strip_initial_indent(lines):
 
         for line in it:
             if line.startswith(indent):
-                yield line[len(indent):]
+                yield line[len(indent) :]
+            elif line in ("\n", "\r\n") or len(line) == 0:
+                yield line
             else:
                 # Less indented than the first line - stop dedenting
                 yield line
@@ -191,7 +193,7 @@ class CodeMagics(Magics):
 
           -r: use 'raw' input.  By default, the 'processed' history is used,
           so that magics are loaded in their transformed version to valid
-          Python.  If this option is given, the raw input as typed as the
+          Python.  If this option is given, the raw input as typed at the
           command line is used instead.
           
           -f: force overwrite.  If file exists, %save will prompt for overwrite

@@ -5,12 +5,13 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.parse
 import os
+from dotenv import load_dotenv
 from operator import itemgetter
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.output_parsers import JsonOutputParser
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 class NamuCrawler():
     """나무 위키 문서 크롤러 클래스"""
@@ -23,12 +24,41 @@ class NamuCrawler():
         self.toc_dict = {}
 
         #파싱용 LLM 모델 셋팅
-        os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+        load_dotenv()
+
+        os.environ["GOOGLE_API_KEY"] = os.getenv("GEMINI_API_KEY")
         os.environ['LANGCHAIN_API_KEY'] = os.getenv("LANGCHAIN_API_KEY")
 
-        self.llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
         os.environ["LANGCHAIN_TRACING_V2"] = "true"
-        os.environ["LANGCHAIN_PROJECT"] = "langchain-academy"
+        os.environ["LANGCHAIN_PROJECT"] = "namu_parser"
+
+        self.llm_parser_prompt = """
+        You are an expert Data Converter. Your goal is to convert HTML tables into the most optimal Markdown format for RAG.
+        The HTML has been pre-cleaned. Analyze the data pattern and strictly follow these adaptive rules:
+
+        **1. Entity Card Pattern (e.g., Member Profiles)**
+        - **Detection**: Columns represent distinct entities, rows contain attributes.
+        - **Action**: Convert to a **Card List** format.
+        - **Format**:
+        ### Entity Name
+        - Attribute: Value
+
+        **2. Key-Value Pattern (e.g., Infoboxes)**
+        - **Detection**: First column headers, subsequent columns values.
+        - **Action**: Convert to a **Hierarchical List**.
+        - **Format**:
+        - **Key**:
+            - Value
+
+        **3. Uniform Data Pattern (e.g., Discography)**
+        - **Detection**: Standard clean rows with headers.
+        - **Action**: Maintain as a **Markdown Table**.
+
+        **General Rules**:
+        - Preserve (icon: ...) markers.
+        - Remove empty rows.
+        """
         
     def construct_toc(self) -> bool:
         """## 목차(TOC) 정보 추출 및 TOC 딕셔너리 구성"""
@@ -68,6 +98,7 @@ class NamuCrawler():
     def get_doc_title(self) -> str:
         """URL에서 현재 문서의 타이틀(주제) 반환 """
         topic = self.url.split("/w/")[-1].split("?")[0]
+        print('find:',topic)
         # topic = urllib.parse.unquote(topic)
         return self.soup.find("a", href = "/w/"+topic).get_text()
 
@@ -143,8 +174,6 @@ class NamuCrawler():
         """두개의 태그 사이의 wiki-paragraph 정보 추출"""
         html_str = str(self.soup)
 
-        # print(head[1]) #작업 위치 프린트
-
         # 시작 태그와 끝 태그의 위치를 찾아 사이의 컨텐츠를 추출, 임시 soup로 만듦
         start_pos = html_str.find(str(start_tag))
         if head[1] == "PROFILE": ## 프로필 이라면 목차 전까지
@@ -156,24 +185,16 @@ class NamuCrawler():
 
         # 헤더가 PROFILE인 경우: 첫번째 테이블만 가져오기
         if head[1] == "PROFILE":
-            # content = self.strip_table(soup_between.find("table"))
             tbl_origin = soup_between.find("table")
-            
-            # PROFILE에서는 <dl>로 감춰둔 내용은 필요 없으므로 미리 제거
-            dl_tags = tbl_origin.find_all('dl')
+            if tbl_origin:
+                # LLM Adaptive Parse 적용
+                content = self.llm_parse(str(tbl_origin))
+                return (head, [content])
+            return (head, [])
 
-            # <dl> 태그와 포함된 내용을 제거
-            for dl_tag in dl_tags:
-                dl_tag.decompose()  # 태그 삭제
-
-            transformed_tbl = self.transform_nested_table(tbl_origin)
-            tbl_array = self.table_to_array(transformed_tbl)
-            content = self.tbl_array_to_json(tbl_array)
-            return (head, [content])
-        # PROFILE이 아닌 경우: 추출할 원소들 리스트에 부모의 태그가 td가 아닌 경우 wiki-paragraph를 가진 엘리먼트를 수집, 거기에 wiki-table까지 추가로 넣기
+        # PROFILE이 아닌 경우: 추출할 원소들 리스트에 부모의 태그가 td가 아닌 경우 wiki-paragraph를 가진 엘리먼트를 수집
         elements_between = [ele for ele in soup_between.find_all('div', class_='wiki-paragraph') if ele.find_parent().name != "td"]
         elements_between += self.get_outer_tables(soup_between)
-        # elements_between += list(soup_between.find_all('table', class_ = 'wiki-table'))
 
         if len(elements_between) == 0 or (len(elements_between) == 1 and elements_between[0].get_text() == ""):
             # 설명이 아예 없는 경우 아래 안내 메세지 반환
@@ -183,29 +204,19 @@ class NamuCrawler():
             ext_link = elements_between[0].find("a", class_ = "wiki-link-internal")['href']
             return (head, ext_link)
          
-        # 설명이 있는 경우엔 get_text()로 텍스트 반환
+        # 설명이 있는 경우엔 get_text()로 텍스트 반환 (테이블은 Markdown 변환)
         text_content = []
         for element in elements_between:
-
-            # 만약 펼치기/접기 버튼이 있으면 그냥 넘어가기 : 데이터가 중복임 => 안에 있는 테이블 파싱 진행 필요하여 생략
-            # if element.find("dl", class_ = 'wiki-folding') is not None:
-            #     continue
             
-            # 만약 테이블 요소를 가지고 있거나 자체가 테이블 클래스라면 테이블을 파싱 & LLM으로 복구하는 코드로 변경 예정
-            if element.find("table", class_ = 'wiki-table') is not None or element.get('class')[0] == 'wiki-table':
-                #     text_content.append(self.strip_table(element))
-                transformed_tbl = self.transform_nested_table(element)
-                tbl_array = self.table_to_array(transformed_tbl)
-                text_content.append(self.tbl_array_to_json(tbl_array))
+            # 만약 테이블 요소를 가지고 있거나 자체가 테이블 클래스라면 llm Parse 적용
+            if element.find("table", class_ = 'wiki-table') is not None or (element.name == 'table' and 'wiki-table' in element.get('class', [])):
+                markdown_table = self.llm_parse(str(element))
+                text_content.append(markdown_table)
 
             # 만약 각주가 있는 엘리먼트라면 각주를 strip하는 함수 적용
             elif element.find("a", class_ = 'wiki-fn-content') is not None:
                 text_content.append(self.strip_footnotes(element))
             
-            # 외부 링크가 있으면 링크를 strip 하는 함수 적용 => 추가 개발 필요
-            # elif element.find("a", class_ = 'wiki-link-external') is not None:
-            #     text_content.append(self.strip_ex_links(element))    
-
             else: #아니면 그냥 일반 get_text() 적용
                 text_content.append(element.get_text())
                 
@@ -244,164 +255,81 @@ class NamuCrawler():
             return (self.toc_dict.get(heading_idx)[0], [self.toc_dict.get(heading_idx)[1].get_text()])
         return self.get_content_between_tags(head = self.toc_dict.get(heading_idx)[0], start_tag= start_tag, end_tag= end_tag)
     
-    def transform_nested_table (self, tbl):
+    # ==========================================
+    # LLM Parsing Methods
+    # ==========================================
+
+    def clean_nested_html(self, raw_html, drop_folded=True):
         """
-            <table> 하위에 <dl>로 숨겨진 테이블을 중첩한 경우
-            <dl> 하위의 테이블을 파싱한 뒤, 중첩된 테이블을 삭제
-            파싱한 하위 테이블은 <dl>이 속한 <tr> 바로 뒤에 삽입하여 부모 테이블의 구조로 병합
-            적용 가능한 범위는 2 depth 중첩인 경우만, 그 이상 중첩은 처리할 수 없음
+        Pre-processes Namuwiki HTML to make it LLM-friendly.
         """
-    
-        tbl_simple = self.simplify_table(tbl)
-        
-        # <dl> 내부에 중첩된 <table>을 처리
-        for dl in tbl_simple.find_all("dl"):
-            nested_table = dl.find("table")  # <dl> 내부의 <table> 찾기
-            if nested_table:
-                # 중첩된 <table>의 <tr> 태그를 추출
-                nested_rows = nested_table.find_all("tr")
-                parent_tbdy = dl.find_parent("tbody")  # <dl>의 부모 <tbody> 찾기
-                if parent_tbdy is None: # <dl>의 부모가 없으면 <table> 중첩 아니므로 생략
-                    continue
-                parent_tr = dl.find_parent('tr') # <dl>의 부모 <tr> 찾기
-                
-                # 병합된 컬럼인 dl.dt는 신규 tr.dt로 생성 후 append 시키기
-                new_tr = BeautifulSoup().new_tag('tr')
-                new_td = BeautifulSoup().new_tag('td')
-                new_td.string = dl.dt.text
-                new_tr.append(new_td)
-                parent_tbdy.append(new_tr)
+        soup = BeautifulSoup(raw_html, 'html.parser')
 
-                # 파싱한 <tr> 태그를 부모 <tbody>에 추가
-                for tr in nested_rows:
-                    parent_tbdy.append(tr)
+        # 0. Noise Removal: <noscript>
+        for noscript in soup.find_all('noscript'):
+            noscript.decompose()
 
-                # 중첩된 <table>를 포함한 tr 태그를 제거
-                parent_tr.decompose()
+        # 1. Handle Images/Icons (Critical for flags and buttons)
+        for img in soup.find_all('img'):
+            alt = img.get('alt', '')
+            if not alt:
+                continue
+            marker = soup.new_string(f" (icon: {alt}) ")
+            img.replace_with(marker)
 
-        # 병합한 tbl 반환
-        return tbl_simple
-
-    def table_to_array (self, tbl):
-        """
-            HTML Table을 2차원 배열로 치환 -> LLM으로 JSON 변환하는 함수
-            병합된 행이 있으면 행을 먼저 분할하고 각 행에 넣어준 뒤에 2차원 배열로 변환
-            병합된 열은 적용하지 않음.
-        """
-
-        # 가장 바깥쪽 테이블 태그만 가져오기
-        # table = ele.find_all('table', class_='wiki-table')[0]
-
-        # Initialize variables
-        rows = tbl.find_all('tr')
-        parsed_data = [] # 파싱한 결과가 들어갈 2차원 배열
-        rowspans = {}  # rowspan이 있으면 병합된 행이 존재, 병합된 행의 idx와 병합된 행의 수를 체크해서 병합을 풀어주는데 사용
-
-        # row 단위로 접근하여 컬럼을 파싱
-        for row_idx, row in enumerate(rows):
-            cells = row.find_all('td')
-            parsed_row = []
-            col_idx = 0
-
-            for cell in cells:
-                # rowspan이 td 내에 있는 경우 rowspans를 이용해서 직전 행에 있는 중복 값을 새로운 행에 적용
-                while col_idx in rowspans and rowspans[col_idx] > 0:
-                    parsed_row.append(parsed_data[-1][col_idx])
-                    rowspans[col_idx] -= 1
-                    col_idx += 1
-
-                # 그 외의 경우 cell의 값을 그대로 가져옴
-                cell_value = cell.get_text(strip=True)
-
-                # 현재 td tag에 rowspan이 적용됐는지 확인하고 적용됐다면 rowspans에 추가
-                rowspan = int(cell.get('rowspan', 1))
-                if rowspan > 1:
-                    rowspans[col_idx] = rowspan - 1
-
-                parsed_row.append(cell_value)
-                col_idx += 1
-
-            # Fill in any remaining rowspan cells
-            while col_idx in rowspans and rowspans[col_idx] > 0:
-                parsed_row.append(parsed_data[-1][col_idx])
-                rowspans[col_idx] -= 1
-                col_idx += 1
-
-            parsed_data.append(parsed_row)
+        # 2. Handle Collapsible Content (<dl><dt><dd>)
+        for dl in soup.find_all('dl'):
+            dt = dl.find('dt')
+            is_folding = dt and ('펼치기' in dt.get_text() or '접기' in dt.get_text())
             
-        # Print the parsed data
-        # for row in parsed_data:
-        #     print(row)
+            if is_folding:
+                if drop_folded:
+                    dl.decompose()
+                else:
+                    if dt: dt.decompose()
+                    dd = dl.find('dd')
+                    if dd: dd.unwrap()
+                    dl.unwrap()
+            else:
+                dl.unwrap()
+
+        # 3. Handle Intra-Cell Stacked Data (<hr>, <br>)
+        for hr in soup.find_all('hr'):
+            hr.replace_with(soup.new_string(" | "))
         
-        return parsed_data
+        for br in soup.find_all('br'):
+            br.replace_with(soup.new_string("\\n")) 
 
-    def simplify_table(self, tbl):
-        """ 
-            테이블 디자인을 위한 불필요한 div 태그 제거
+        # 4. Universal Tag Flattening
+        allowed_tags = ['table', 'tr', 'td', 'th', 'tbody', 'thead']
+        for tag in soup.find_all(True):
+            if tag.name not in allowed_tags:
+                tag.unwrap() 
+
+        # 5. Attribute Stripping
+        for tag in soup.find_all(True):
+            attrs = dict(tag.attrs)
+            for attr in attrs:
+                if attr not in ['rowspan', 'colspan']:
+                    del tag[attr]
+
+        return soup.prettify()
+
+    def llm_parse(self, html_content: str) -> str:
         """
-        for div in tbl.find_all('div'):
-            # 디자인 목적의 div만 제거 (단, 필요 시 보존)
-            if div.get('style') and not div.get('class'):
-                div.unwrap()
-
-        # 중첩된 span 태그도 제거
-        for span in tbl.find_all('span'):
-            span.unwrap()
+        Orchestrates the adaptive parsing: Clean HTML -> LLM -> Markdown
+        """
+        cleaned = self.clean_nested_html(str(html_content))
         
-        # 중첩된 img 태그도 제거
-        for span in tbl.find_all('img'):
-            span.unwrap()
-            
-        # 제거하고자 하는 텍스트
-        stopwords = ["행정구","속령"]
-
-        # 특정 텍스트가 포함된 모든 태그 찾기
-        for word in stopwords:
-            tags_to_remove = tbl.find_all(string=lambda text: word in text)
-
-            # 찾은 태그들 제거
-            for tag in tags_to_remove:
-                tag.parent.decompose()
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", self.llm_parser_prompt),
+            ("human", "Convert this HTML:\n{html}")
+        ])
         
-        return tbl
-
-    def tbl_array_to_json(self, arr) -> str:
-        """
-            LLM을 이용해서 2차원 배열을 JSON 형태로 변환하는 함수
-        """
-
-        append_row = []
-        for row in arr:
-            append_row.append(",".join(col for col in row))
-        str_table = "\n\n ".join(row for row in append_row)
-
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                # role, message
-                ("system", """You are an expert in data parsing and JSON conversion. Your task is to analyze and transform structured text data into properly formatted JSON objects. The data may have the following characteristics:
-
-                        1. Some rows may be entirely empty. Ignore these rows and do not include them in the final output.
-                        2. If a row has a different number of columns than the previous rows, it indicates merged cells or inconsistent formatting. Interpret these cases carefully to maintain data consistency.
-                        3. Records may be structured either by rows or by columns. You need to analyze the entire dataset to determine whether the primary record structure should be row-based or column-based before generating the JSON.
-                        4. Strings in the form of [\d+] are footnotes, so they do not need to be included in the output.
-
-                        Your job is to accurately identify and handle these variations to create a clean, valid JSON output that reflects the data structure.
-                        Output only the final JSON representation, without any additional explanations or text.
-                        If the output format is a code block, please output it in JSON format with the code block removed.
-                        """),
-                ("human", """"I have a structured string representing tabular data where each row is separated by '\n\n' and columns by commas. 
-                Here is the structured string:
-                <string>{table}</string>
-                Parse the input, then generate JSON where each subsequent row corresponds to a JSON object with the respective header keys.
-        """)
-            ]
-        )
-
-        # 수정된 체인 생성 코드
-        chain = {
-                'table': itemgetter('table') | RunnablePassthrough()
-        } | prompt | self.llm | StrOutputParser()
-
-        result = chain.invoke({"table":str_table}) 
-
-        return result
+        # StrOutputParser is sufficient as we want Markdown text, not JSON
+        chain = prompt | self.llm | StrOutputParser()
+        
+        try:
+            return chain.invoke({"html": cleaned})
+        except Exception as e:
+            return f"Error parsing table: {e}"

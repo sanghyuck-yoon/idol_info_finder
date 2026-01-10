@@ -4,6 +4,7 @@ from decimal import Decimal
 from hashlib import md5
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 
+from langchain_core._api import deprecated
 from langchain_core.tools import BaseTool, StructuredTool
 from langchain_core.tools.base import BaseToolkit
 from pydantic import BaseModel, Field, create_model
@@ -50,8 +51,8 @@ def _uc_type_to_pydantic_type(uc_type_json: Union[str, Dict[str, Any]]) -> Type:
         if tpe == "array":
             element_type = _uc_type_to_pydantic_type(uc_type_json["elementType"])
             if uc_type_json["containsNull"]:
-                element_type = Optional[element_type]  # type: ignore
-            return List[element_type]  # type: ignore
+                element_type = Optional[element_type]  # type: ignore[assignment]
+            return List[element_type]  # type: ignore[valid-type]
         elif tpe == "map":
             key_type = uc_type_json["keyType"]
             assert key_type == "string", TypeError(
@@ -59,14 +60,14 @@ def _uc_type_to_pydantic_type(uc_type_json: Union[str, Dict[str, Any]]) -> Type:
             )
             value_type = _uc_type_to_pydantic_type(uc_type_json["valueType"])
             if uc_type_json["valueContainsNull"]:
-                value_type: Type = Optional[value_type]  # type: ignore
-            return Dict[str, value_type]  # type: ignore
+                value_type: Type = Optional[value_type]  # type: ignore[no-redef]
+            return Dict[str, value_type]  # type: ignore[valid-type]
         elif tpe == "struct":
             fields = {}
             for field in uc_type_json["fields"]:
                 field_type = _uc_type_to_pydantic_type(field["type"])
                 if field.get("nullable"):
-                    field_type = Optional[field_type]  # type: ignore
+                    field_type = Optional[field_type]  # type: ignore[assignment]
                 comment = (
                     uc_type_json["metadata"].get("comment")
                     if "metadata" in uc_type_json
@@ -75,7 +76,7 @@ def _uc_type_to_pydantic_type(uc_type_json: Union[str, Dict[str, Any]]) -> Type:
                 fields[field["name"]] = (field_type, Field(..., description=comment))
             uc_type_json_str = json.dumps(uc_type_json, sort_keys=True)
             type_hash = md5(uc_type_json_str.encode()).hexdigest()[:8]
-            return create_model(f"Struct_{type_hash}", **fields)  # type: ignore
+            return create_model(f"Struct_{type_hash}", **fields)  # type: ignore[call-overload]
         else:
             raise TypeError(f"Unknown type {uc_type_json}. Try upgrading this package.")
 
@@ -93,7 +94,7 @@ def _generate_args_schema(function: "FunctionInfo") -> Type[BaseModel]:
         description = p.comment
         default: Any = ...
         if p.parameter_default:
-            pydantic_type = Optional[pydantic_type]  # type: ignore
+            pydantic_type = Optional[pydantic_type]  # type: ignore[assignment]
             default = None
             # TODO: Convert default value string to the correct type.
             # We might need to use statement execution API
@@ -107,9 +108,9 @@ def _generate_args_schema(function: "FunctionInfo") -> Type[BaseModel]:
             pydantic_type,
             Field(default=default, description=description),
         )
-    return create_model(
+    return create_model(  # type: ignore[call-overload]
         f"{function.catalog_name}__{function.schema_name}__{function.name}__params",
-        **fields,  # type: ignore
+        **fields,
     )
 
 
@@ -131,6 +132,11 @@ def _get_default_workspace_client() -> Any:
     return WorkspaceClient()
 
 
+@deprecated(
+    since="0.3.18",
+    removal="1.0",
+    alternative_import="databricks_langchain.uc_ai.UCFunctionToolkit",
+)
 class UCFunctionToolkit(BaseToolkit):
     warehouse_id: str = Field(
         description="The ID of a Databricks SQL Warehouse to execute functions."

@@ -109,6 +109,14 @@ from IPython.utils.py3compat import PYPY
 
 from typing import Dict
 
+# Allow pretty-printing of functions with PEP-649 annotations
+if sys.version_info >= (3, 14):
+    from annotationlib import Format
+    from functools import partial
+
+    signature = partial(signature, annotation_format=Format.FORWARDREF)
+
+
 __all__ = ['pretty', 'pprint', 'PrettyPrinter', 'RepresentationPrinter',
     'for_type', 'for_type_by_name', 'RawText', 'RawStringLiteral', 'CallExpression']
 
@@ -126,14 +134,6 @@ def _safe_getattr(obj, attr, default=None):
         return getattr(obj, attr, default)
     except Exception:
         return default
-
-@undoc
-class CUnicodeIO(StringIO):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        warn(("CUnicodeIO is deprecated since IPython 6.0. "
-              "Please use io.StringIO instead."),
-             DeprecationWarning, stacklevel=2)
 
 def _sorted_for_pprint(items):
     """
@@ -171,7 +171,8 @@ def pprint(obj, verbose=False, max_width=79, newline='\n', max_seq_length=MAX_SE
     sys.stdout.write(newline)
     sys.stdout.flush()
 
-class _PrettyPrinterBase(object):
+
+class _PrettyPrinterBase:
 
     @contextmanager
     def indent(self, indent):
@@ -442,7 +443,7 @@ class RepresentationPrinter(PrettyPrinter):
         return printer
 
 
-class Printable(object):
+class Printable:
 
     def output(self, stream, output_width):
         return output_width
@@ -494,7 +495,7 @@ class Group(Printable):
         self.want_break = False
 
 
-class GroupQueue(object):
+class GroupQueue:
 
     def __init__(self, *groups):
         self.queue = []
@@ -541,7 +542,7 @@ class RawText:
 class CallExpression:
     """ Object which emits a line-wrapped call expression in the form `__name(*args, **kwargs)` """
     def __init__(__self, __name, *args, **kwargs):
-        # dunders are to avoid clashes with kwargs, as python's name manging
+        # dunders are to avoid clashes with kwargs, as python's name managing
         # will kick in.
         self = __self
         self.name = __name
@@ -555,7 +556,7 @@ class CallExpression:
         return inner
 
     def _repr_pretty_(self, p, cycle):
-        # dunders are to avoid clashes with kwargs, as python's name manging
+        # dunders are to avoid clashes with kwargs, as python's name managing
         # will kick in.
 
         started = False
@@ -724,8 +725,15 @@ class _ReFlags:
 
     def _repr_pretty_(self, p, cycle):
         done_one = False
-        for flag in ('TEMPLATE', 'IGNORECASE', 'LOCALE', 'MULTILINE', 'DOTALL',
-            'UNICODE', 'VERBOSE', 'DEBUG'):
+        for flag in (
+            "IGNORECASE",
+            "LOCALE",
+            "MULTILINE",
+            "DOTALL",
+            "UNICODE",
+            "VERBOSE",
+            "DEBUG",
+        ):
             if self.value & getattr(re, flag):
                 if done_one:
                     p.text('|')
@@ -940,7 +948,8 @@ for_type_by_name("collections", "UserList", _userlist_pprint)
 
 if __name__ == '__main__':
     from random import randrange
-    class Foo(object):
+
+    class Foo:
         def __init__(self):
             self.foo = 1
             self.bar = re.compile(r'\s+')

@@ -4,8 +4,8 @@ These are necessary to avoid circular imports between schema.py and fields.py.
 
 .. warning::
 
-    This module is treated as private API.
-    Users should not need to use this module directly.
+    This module is deprecated. Users should not import from this module.
+    Use `marshmallow.fields.Field` and `marshmallow.schema.Schema` as base classes instead.
 """
 
 from __future__ import annotations
@@ -15,10 +15,6 @@ from abc import ABC, abstractmethod
 
 class FieldABC(ABC):
     """Abstract base class from which all Field classes inherit."""
-
-    parent = None
-    name = None
-    root = None
 
     @abstractmethod
     def serialize(self, attr, obj, accessor=None):

@@ -58,7 +58,6 @@ class TavilySearchAPIWrapper(BaseModel):
             "include_images": include_images,
         }
         response = requests.post(
-            # type: ignore
             f"{TAVILY_API_URL}/search",
             json=params,
         )
@@ -176,10 +175,13 @@ class TavilySearchAPIWrapper(BaseModel):
         """Clean results from Tavily Search API."""
         clean_results = []
         for result in results:
-            clean_results.append(
-                {
-                    "url": result["url"],
-                    "content": result["content"],
-                }
-            )
+            clean_result = {
+                "title": result["title"],
+                "url": result["url"],
+                "content": result["content"],
+                "score": result["score"],
+            }
+            if raw_content := result.get("raw_content"):
+                clean_result["raw_content"] = raw_content
+            clean_results.append(clean_result)
         return clean_results
